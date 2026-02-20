@@ -1,0 +1,4106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kin Hai · Senior AI Product Manager</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --ink: #0d0d0d;
+    --ink-muted: #3e3e3e;
+    --ink-faint: #808080;
+    --paper: #f7f5f0;
+    --paper-dark: #eeebe4;
+    --accent: #c84b2f;
+    --accent-muted: #e8c4bb;
+    --rule: #d4d0c8;
+    --mono: 'DM Mono', monospace;
+    --serif: 'Playfair Display', serif;
+    --sans: 'DM Sans', sans-serif;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    /* Fluid base font: 16px at 1280px, scales up to 20px at 2560px */
+    font-size: clamp(18px, 1.4vw, 26px);
+  }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-weight: 300;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px clamp(48px, 5vw, 120px);
+    background: var(--paper);
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .nav-mark {
+    font-family: var(--mono);
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    color: var(--ink-muted);
+    text-transform: uppercase;
+  }
+
+  .nav-mark span { color: var(--accent); }
+
+  nav ul {
+    display: flex;
+    gap: 36px;
+    list-style: none;
+  }
+
+  nav ul a {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  nav ul a:hover { color: var(--accent); }
+
+  /* ── HERO ── */
+  .hero {
+    min-height: calc(100vh - 46px);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    padding-top: 66px;
+  }
+
+  .hero-left {
+    padding: 80px 48px 80px 48px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    border-right: 1px solid var(--rule);
+  }
+
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 32px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .eyebrow::before {
+    content: '';
+    display: block;
+    width: 32px;
+    height: 1px;
+    background: var(--accent);
+  }
+
+  h1 {
+    font-family: var(--serif);
+    font-size: clamp(42px, 5vw, 68px);
+    font-weight: 900;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    margin-bottom: 32px;
+  }
+
+  h1 em {
+    font-style: italic;
+    color: var(--accent);
+  }
+
+  .hero-statement {
+    font-size: 17px;
+    line-height: 1.75;
+    color: var(--ink-muted);
+    max-width: 480px;
+    margin-bottom: 48px;
+    font-weight: 300;
+  }
+
+  .hero-statement strong {
+    color: var(--ink);
+    font-weight: 500;
+  }
+
+  .cta-row {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+  }
+
+  .btn-primary {
+    background: var(--ink);
+    color: var(--paper);
+    padding: 14px 28px;
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .btn-primary:hover { background: var(--accent); }
+
+  .btn-ghost {
+    color: var(--ink-muted);
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: color 0.2s;
+  }
+
+  .btn-ghost:hover { color: var(--accent); }
+  .btn-ghost::after { content: '→'; }
+
+  /* ── RIGHT PANEL ── */
+  .hero-right {
+    padding: 80px 48px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0;
+    background: var(--paper-dark);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero-right::before {
+    content: '';
+    position: absolute;
+    top: -100px; right: -100px;
+    width: 400px; height: 400px;
+    border-radius: 50%;
+    background: radial-gradient(circle, var(--accent-muted) 0%, transparent 70%);
+    opacity: 0.4;
+  }
+
+  .proof-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: 32px;
+  }
+
+  .proof-item {
+    padding: 28px 0;
+    border-bottom: 1px solid var(--rule);
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 20px;
+    align-items: start;
+    position: relative;
+  }
+
+  .proof-item:first-of-type { border-top: 1px solid var(--rule); }
+
+  .proof-num {
+    font-family: var(--serif);
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--accent);
+    padding-top: 3px;
+  }
+
+  .proof-title {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--ink);
+    margin-bottom: 6px;
+    letter-spacing: -0.01em;
+  }
+
+  .proof-desc {
+    font-size: 13px;
+    color: var(--ink-muted);
+    line-height: 1.6;
+  }
+
+  .proof-tag {
+    display: inline-block;
+    margin-top: 10px;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    border: 1px solid var(--accent-muted);
+    padding: 3px 8px;
+  }
+
+  /* ── CREDENTIAL BAR ── */
+  .credential-bar {
+    background: var(--ink);
+    padding: 13px 48px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 32px;
+  }
+
+  .cred-items {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    flex: 1;
+  }
+
+  .cred-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 32px;
+    border-right: 1px solid #2a2a2a;
+  }
+
+  .cred-item:first-child { padding-left: 0; }
+  .cred-item:last-child { border-right: none; }
+
+  .cred-value {
+    font-family: var(--serif);
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--paper);
+    white-space: nowrap;
+  }
+
+  .cred-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #888;
+    white-space: nowrap;
+  }
+
+  .cred-dot {
+    width: 3px; height: 3px;
+    border-radius: 50%;
+    background: var(--accent);
+    flex-shrink: 0;
+  }
+
+  /* ── ANIMATIONS ── */
+  .fade-up {
+    opacity: 0;
+    transform: translateY(24px);
+    animation: fadeUp 0.7s ease forwards;
+  }
+
+  .fade-up:nth-child(1) { animation-delay: 0.1s; }
+  .fade-up:nth-child(2) { animation-delay: 0.25s; }
+  .fade-up:nth-child(3) { animation-delay: 0.4s; }
+  .fade-up:nth-child(4) { animation-delay: 0.55s; }
+  .fade-up:nth-child(5) { animation-delay: 0.7s; }
+
+  @keyframes fadeUp {
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .proof-item {
+    opacity: 0;
+    transform: translateX(16px);
+    animation: slideIn 0.5s ease forwards;
+  }
+
+  .proof-item:nth-child(1) { animation-delay: 0.4s; }
+  .proof-item:nth-child(2) { animation-delay: 0.55s; }
+  .proof-item:nth-child(3) { animation-delay: 0.7s; }
+
+  @keyframes slideIn {
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  /* ── LABEL BADGE ── */
+  .available-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--paper-dark);
+    border: 1px solid var(--rule);
+    padding: 6px 14px;
+    margin-bottom: 28px;
+    width: fit-content;
+  }
+
+  .available-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: #22c55e;
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  .available-text {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  /* ── DIRECTION LABEL ── */
+  .direction-label {
+    position: fixed;
+    bottom: 24px;
+    left: 24px;
+    background: var(--ink);
+    color: var(--paper);
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    padding: 8px 16px;
+    z-index: 200;
+  }
+
+  /* ── SECTION SHARED ── */
+  .section-wrap {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 48px;
+  }
+
+  .section-header {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 32px;
+    align-items: baseline;
+    padding: 80px 0 52px;
+    border-bottom: 1px solid var(--rule);
+    margin-bottom: 64px;
+  }
+
+  .section-eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent);
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .section-eyebrow::before {
+    content: '';
+    display: block;
+    width: 24px;
+    height: 1px;
+    background: var(--accent);
+  }
+
+  .section-title {
+    font-family: var(--serif);
+    font-size: clamp(28px, 3vw, 40px);
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+  }
+
+  /* ── MIRA CASE STUDY ── */
+  .mira-section {
+    background: var(--paper);
+    border-top: 1px solid var(--rule);
+  }
+
+  /* ── PROBLEM SECTION (expanded) ── */
+  .mira-problem {
+    background: var(--ink);
+    color: var(--paper);
+  }
+
+  /* Part 1: Inequality statement — full width */
+  .prob-inequality {
+    padding: 72px 48px 56px;
+    border-bottom: 1px solid #1e1e1e;
+    max-width: 1400px;
+    margin: 0 auto;
+    width: 100%;
+  }
+
+  .prob-inequality-eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 32px;
+  }
+
+  .prob-inequality-eyebrow::before {
+    content: '';
+    display: block;
+    width: 24px;
+    height: 1px;
+    background: var(--accent);
+  }
+
+  .prob-inequality-statement {
+    font-family: var(--serif);
+    font-size: clamp(28px, 4vw, 52px);
+    font-weight: 900;
+    line-height: 1.1;
+    letter-spacing: -0.03em;
+    color: var(--paper);
+    margin-bottom: 28px;
+  }
+
+  .prob-inequality-statement em {
+    font-style: italic;
+    color: var(--accent);
+  }
+
+  .prob-inequality-sub {
+    font-size: 16px;
+    line-height: 1.75;
+    color: #b8b4ac;
+    font-weight: 300;
+    max-width: 680px;
+  }
+
+  .prob-inequality-sub strong {
+    color: var(--paper);
+    font-weight: 500;
+  }
+
+  /* Part 2: Human cost — two persona moments */
+  .prob-moments {
+    padding: 56px 48px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background: #1a1a1a;
+    border-bottom: 1px solid #1e1e1e;
+  }
+
+  .prob-moment {
+    background: var(--ink);
+    padding: 44px 48px;
+  }
+
+  .prob-moment-persona {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent);
+    opacity: 0.8;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .prob-moment-persona::before {
+    content: '';
+    display: block;
+    width: 16px;
+    height: 1px;
+    background: var(--accent);
+    opacity: 0.6;
+  }
+
+  .prob-moment-scene {
+    font-family: var(--serif);
+    font-size: clamp(18px, 1.4vw, 26px);
+    font-weight: 700;
+    color: var(--paper);
+    line-height: 1.35;
+    letter-spacing: -0.01em;
+    margin-bottom: 20px;
+  }
+
+  .prob-moment-scene em {
+    font-style: italic;
+    color: var(--accent);
+  }
+
+  .prob-moment-body {
+    font-size: 14px;
+    line-height: 1.8;
+    color: #b0aca4;
+    font-weight: 300;
+  }
+
+  .prob-moment-body strong {
+    color: var(--paper);
+    font-weight: 500;
+  }
+
+  .prob-moment-cost {
+    display: inline-block;
+    margin-top: 20px;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    color: var(--accent);
+    border: 1px solid rgba(200,75,47,0.3);
+    padding: 6px 12px;
+  }
+
+  /* Part 3: Origin story */
+  .prob-origin {
+    padding: 48px 48px 56px;
+    max-width: 1400px;
+    margin: 0 auto;
+    width: 100%;
+  }
+
+  .prob-origin-inner {
+    border-left: 2px solid var(--accent);
+    padding: 24px 32px;
+    background: rgba(200,75,47,0.04);
+    display: grid;
+    grid-template-columns: 160px 1fr;
+    gap: 40px;
+    align-items: start;
+  }
+
+  .prob-origin-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent);
+    opacity: 0.8;
+    line-height: 1.6;
+    padding-top: 3px;
+  }
+
+  .prob-origin-text {
+    font-size: 15px;
+    line-height: 1.8;
+    color: #b8b4ac;
+    font-weight: 300;
+  }
+
+  .prob-origin-text strong {
+    color: var(--paper);
+    font-weight: 500;
+  }
+
+  /* Legacy selectors kept for safety */
+  .problem-heading {
+    font-family: var(--serif);
+    font-size: clamp(22px, 2.5vw, 32px);
+    font-weight: 700;
+    line-height: 1.3;
+    letter-spacing: -0.02em;
+    color: var(--paper);
+  }
+
+  .problem-heading em { font-style: italic; color: var(--accent); }
+  .problem-body { font-size: 15px; line-height: 1.8; color: #b8b4ac; font-weight: 300; }
+  .problem-body strong { color: var(--paper); font-weight: 500; }
+
+  /* Meta strip */
+  .mira-meta {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .meta-cell {
+    padding: 28px 32px;
+    border-right: 1px solid var(--rule);
+  }
+
+  .meta-cell:last-child { border-right: none; }
+
+  .meta-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: 8px;
+  }
+
+  .meta-value {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--ink);
+    line-height: 1.4;
+  }
+
+  /* Decisions section */
+  .decisions-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1px;
+    background: var(--rule);
+    border: 1px solid var(--rule);
+    margin-bottom: 64px;
+  }
+
+  .decision-card {
+    background: var(--paper);
+    padding: 40px 36px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    transition: background 0.2s;
+  }
+
+  .decision-card:hover { background: var(--paper-dark); }
+
+  .decision-number {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+
+  .decision-title {
+    font-family: var(--serif);
+    font-size: 19px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+    line-height: 1.3;
+  }
+
+  .decision-context {
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--ink-muted);
+    font-weight: 300;
+  }
+
+  .decision-divider {
+    height: 1px;
+    background: var(--rule);
+  }
+
+  .decision-chosen {
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--ink);
+    font-weight: 400;
+  }
+
+  .decision-chosen-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 6px;
+  }
+
+  .decision-tag {
+    display: inline-block;
+    margin-top: auto;
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    border: 1px solid var(--accent-muted);
+    padding: 3px 8px;
+    width: fit-content;
+  }
+
+  /* Outcome strip */
+  .outcome-strip {
+    background: var(--paper-dark);
+    border: 1px solid var(--rule);
+    padding: 48px;
+    display: grid;
+    grid-template-columns: 1fr 2px 1fr 2px 1fr;
+    gap: 48px;
+    align-items: start;
+    margin-bottom: 64px;
+  }
+
+  .outcome-divider-v {
+    background: var(--rule);
+    height: 100%;
+    min-height: 60px;
+  }
+
+  .outcome-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .outcome-number {
+    font-family: var(--serif);
+    font-size: clamp(28px, 3vw, 40px);
+    font-weight: 900;
+    color: var(--ink);
+    letter-spacing: -0.03em;
+    line-height: 1;
+  }
+
+  .outcome-number span { color: var(--accent); }
+
+  .outcome-label {
+    font-size: 13px;
+    color: var(--ink-muted);
+    line-height: 1.5;
+    font-weight: 300;
+  }
+
+  /* Honest framing box */
+  .honest-box {
+    border-left: 3px solid var(--accent);
+    padding: 28px 32px;
+    background: var(--paper-dark);
+    margin-bottom: 80px;
+  }
+
+  .honest-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 12px;
+  }
+
+  .honest-text {
+    font-size: 15px;
+    line-height: 1.75;
+    color: var(--ink-muted);
+    font-weight: 300;
+  }
+
+  .honest-text strong { color: var(--ink); font-weight: 500; }
+
+  .learning-box {
+    border-left: 3px solid var(--ink-faint);
+    padding: 28px 32px;
+    background: var(--paper);
+    margin-bottom: 80px;
+    margin-top: -40px;
+  }
+
+  .learning-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: 12px;
+  }
+
+  .learning-text {
+    font-size: 15px;
+    line-height: 1.8;
+    color: var(--ink-muted);
+    font-weight: 300;
+    font-style: italic;
+  }
+
+  .learning-text strong {
+    color: var(--ink);
+    font-weight: 500;
+    font-style: normal;
+  }
+
+  /* Scroll reveal */
+  .reveal {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+
+  .reveal.visible { opacity: 1; transform: translateY(0); }
+
+  /* ── PIPELINE DEMO (light) ── */
+  .pipeline-demo-section {
+    background: #e8e2d8;
+    border-top: 1px solid #c8c2b4;
+    border-bottom: 1px solid #c8c2b4;
+    padding: 72px 48px;
+    margin-bottom: 64px;
+  }
+
+  .demo-framing {
+    max-width: 1400px;
+    margin: 0 auto 48px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 48px;
+    align-items: end;
+  }
+
+  .demo-framing-title {
+    font-family: var(--serif);
+    font-size: clamp(22px, 2.5vw, 32px);
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    line-height: 1.2;
+    margin-bottom: 12px;
+  }
+
+  .demo-framing-title em { font-style: italic; color: var(--accent); }
+
+  .demo-framing-desc {
+    font-size: 14px;
+    line-height: 1.75;
+    color: var(--ink-muted);
+    font-weight: 300;
+  }
+
+  .demo-inner { max-width: 1400px; margin: 0 auto; }
+
+  .demo-input-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: 10px;
+  }
+
+  .demo-input-row {
+    display: flex;
+    border: 1px solid #b8b2a4;
+    background: #f7f5f0;
+    margin-bottom: 12px;
+  }
+
+  .demo-input-row input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    padding: 14px 18px;
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--ink);
+    caret-color: var(--accent);
+  }
+
+  .demo-input-row input::placeholder { color: var(--ink-faint); }
+
+  .demo-run-btn {
+    background: var(--ink);
+    color: var(--paper);
+    border: none;
+    padding: 0 24px;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.2s;
+    white-space: nowrap;
+  }
+
+  .demo-run-btn:hover { background: var(--accent); }
+
+  .demo-presets {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 36px;
+  }
+
+  .demo-preset {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    color: var(--ink-muted);
+    border: 1px solid #b8b2a4;
+    padding: 5px 12px;
+    cursor: pointer;
+    background: #f7f5f0;
+    transition: all 0.15s;
+  }
+
+  .demo-preset:hover { border-color: var(--accent); color: var(--accent); background: #f7f5f0; }
+
+  .demo-pipeline { display: flex; flex-direction: column; gap: 0; margin-bottom: 28px; }
+
+  .demo-node {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    border: 1px solid #b8b2a4;
+    border-bottom: none;
+    opacity: 0.5;
+    transition: opacity 0.35s, border-color 0.3s, background 0.3s;
+    position: relative;
+    background: #f7f5f0;
+  }
+
+  .demo-node:last-child { border-bottom: 1px solid #b8b2a4; }
+  .demo-node.active { opacity: 1; border-color: var(--ink-faint); background: #ffffff; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+  .demo-node.done { opacity: 1; background: #faf9f6; }
+
+  .demo-node:not(:last-child)::after {
+    content: '↓';
+    position: absolute;
+    bottom: -16px; left: 98px;
+    font-size: 11px;
+    color: var(--ink-faint);
+    z-index: 2;
+    background: #e8e2d8;
+    padding: 0 4px;
+    transition: color 0.3s;
+  }
+
+  .demo-node.done:not(:last-child)::after { color: var(--accent); }
+
+  .demo-node.escalated-node::before {
+    content: '⤷ confirmation required';
+    position: absolute;
+    right: -220px; top: 50%;
+    transform: translateY(-50%);
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    color: #b07020;
+    white-space: nowrap;
+    border: 1px solid #d4a060;
+    padding: 4px 10px;
+    background: #fdf4e7;
+  }
+
+  .demo-node-id {
+    padding: 20px 18px;
+    border-right: 1px solid #c8c2b4;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 5px;
+    background: rgba(0,0,0,0.02);
+  }
+
+  .demo-node-step {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+
+  .demo-node-name { font-size: 13px; font-weight: 500; color: var(--ink); }
+
+  .demo-node-model {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--ink-faint);
+    margin-top: 2px;
+  }
+
+  .demo-node-model.owned { color: #2a7a50; }
+  .demo-node-model.openai { color: #3a6e8a; }
+
+  .demo-node-body {
+    padding: 18px 24px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 8px;
+    min-height: 80px;
+  }
+
+  .demo-node-out {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--ink-faint);
+    line-height: 1.6;
+  }
+
+  .demo-node-out.live { color: var(--ink-muted); }
+
+  .demo-node-metrics { display: none; gap: 20px; }
+  .demo-node-metrics.show { display: flex; }
+
+  .dnm-val { font-family: var(--mono); font-size: 12px; font-weight: 500; color: var(--ink); }
+  .dnm-val.green { color: #2a7a50; }
+  .dnm-val.amber { color: #b07020; }
+  .dnm-val.blue { color: #3a6e8a; }
+  .dnm-key { font-family: var(--mono); font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-faint); margin-top: 2px; }
+
+  .demo-processing { display: none; align-items: center; gap: 8px; font-family: var(--mono); font-size: 11px; color: var(--accent); }
+  .demo-processing.show { display: flex; }
+
+  .dp-dots span {
+    display: inline-block; width: 4px; height: 4px;
+    border-radius: 50%; background: var(--accent);
+    animation: dpulse 1.2s ease-in-out infinite;
+  }
+  .dp-dots span:nth-child(2) { animation-delay: 0.2s; }
+  .dp-dots span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes dpulse { 0%,80%,100% { transform:scale(0.6); opacity:0.35; } 40% { transform:scale(1); opacity:1; } }
+
+  .demo-verdict {
+    border: 1px solid #b8b2a4;
+    background: #ffffff;
+    padding: 28px 32px;
+    display: none;
+    gap: 24px;
+    align-items: flex-start;
+    margin-bottom: 16px;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.06);
+  }
+  .demo-verdict.show { display: flex; }
+  .dv-icon { font-size: 24px; flex-shrink: 0; }
+  .dv-label { font-family: var(--mono); font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--ink-faint); margin-bottom: 6px; }
+  .dv-action { font-family: var(--serif); font-size: 17px; font-weight: 700; color: var(--ink); margin-bottom: 6px; }
+  .dv-reason { font-size: 13px; color: var(--ink-muted); line-height: 1.6; }
+  .dv-cost { margin-left: auto; text-align: right; flex-shrink: 0; }
+  .dv-cost-val { font-family: var(--mono); font-size: 18px; font-weight: 500; color: #2a7a50; }
+  .dv-cost-key { font-family: var(--mono); font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--ink-faint); margin-top: 4px; }
+
+  .demo-reset {
+    display: none;
+    background: transparent;
+    border: 1px solid var(--rule);
+    color: var(--ink-muted);
+    padding: 8px 20px;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .demo-reset:hover { border-color: var(--ink-muted); color: var(--ink); }
+  .demo-reset.show { display: block; }
+
+  /* ── MOBILE DESIGN SECTION ── */
+  .mobile-screens {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 40px;
+    margin-bottom: 56px;
+    align-items: start;
+  }
+
+  .phone-frame { display: flex; flex-direction: column; align-items: center; gap: 20px; }
+
+  /* iPhone portrait shell — 390×844 ratio (iPhone 14 Pro) */
+  .phone-shell {
+    width: 100%;
+    max-width: 300px;
+    aspect-ratio: 390 / 844;
+    background: #0a0a0a;
+    border-radius: 44px;
+    border: 8px solid #1a1a1a;
+    box-shadow:
+      inset 0 0 0 1px #2a2a2a,
+      inset 0 0 0 2px #111,
+      0 40px 80px rgba(0,0,0,0.22),
+      0 10px 20px rgba(0,0,0,0.1);
+    overflow: hidden;
+    position: relative;
+    transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.35s ease;
+  }
+
+  .phone-shell:hover {
+    transform: translateY(-8px) scale(1.015);
+    box-shadow:
+      inset 0 0 0 1px #2a2a2a,
+      inset 0 0 0 2px #111,
+      0 60px 100px rgba(0,0,0,0.28),
+      0 16px 32px rgba(0,0,0,0.14);
+  }
+
+  /* Dynamic Island */
+  .phone-shell::before {
+    content: '';
+    position: absolute;
+    top: 12px; left: 50%;
+    transform: translateX(-50%);
+    width: 88px; height: 26px;
+    background: #0a0a0a;
+    border-radius: 20px;
+    z-index: 20;
+  }
+
+  /* Side button detail */
+  .phone-shell::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    border-radius: 36px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.04) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 19;
+  }
+
+  /* Figma iframe inside phone — absolute + JS-scaled to fill shell */
+  .phone-figma-frame {
+    position: absolute;
+    top: 0; left: 0;
+    width: 390px;
+    height: 844px;
+    border: none;
+    display: block;
+    transform-origin: top left;
+    /* scale set by JS: scalePhones() */
+  }
+
+  /* Placeholder for voice (no figma yet) */
+  .phone-placeholder { width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 48px 0 16px; }
+  .placeholder-voice { background: linear-gradient(160deg, #0d1117 0%, #081a14 60%, #0a2018 100%); }
+
+  .ph-mira-header {
+    width: 100%;
+    padding: 0 18px 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .ph-mira-logo { font-family: var(--serif); font-size: 17px; font-weight: 700; color: white; letter-spacing: -0.02em; }
+  .ph-mira-status { width: 8px; height: 8px; border-radius: 50%; background: #22c97a; box-shadow: 0 0 8px rgba(34,201,122,0.5); }
+
+  .ph-voice-center { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; width: 100%; padding: 0 18px; }
+
+  .ph-voice-orb {
+    width: 88px; height: 88px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 40% 40%, #1a5a40, #0a2a20);
+    border: 2px solid rgba(34,201,122,0.25);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 32px;
+    box-shadow: 0 0 48px rgba(34,201,122,0.14);
+    animation: orb-breathe 3s ease-in-out infinite;
+  }
+
+  @keyframes orb-breathe {
+    0%,100% { box-shadow: 0 0 48px rgba(34,201,122,0.14); transform: scale(1); }
+    50% { box-shadow: 0 0 72px rgba(34,201,122,0.24); transform: scale(1.04); }
+  }
+
+  .ph-voice-text { font-size: 12px; color: rgba(255,255,255,0.4); text-align: center; letter-spacing: 0.02em; }
+
+  .ph-voice-wave { display: flex; gap: 4px; align-items: center; justify-content: center; height: 28px; }
+  .ph-voice-wave span { display: block; width: 3px; background: rgba(34,201,122,0.5); border-radius: 2px; animation: wave 1s ease-in-out infinite; }
+  .ph-voice-wave span:nth-child(1) { height: 8px; animation-delay: 0s; }
+  .ph-voice-wave span:nth-child(2) { height: 16px; animation-delay: 0.1s; }
+  .ph-voice-wave span:nth-child(3) { height: 22px; animation-delay: 0.2s; }
+  .ph-voice-wave span:nth-child(4) { height: 14px; animation-delay: 0.3s; }
+  .ph-voice-wave span:nth-child(5) { height: 22px; animation-delay: 0.4s; }
+  .ph-voice-wave span:nth-child(6) { height: 16px; animation-delay: 0.5s; }
+  .ph-voice-wave span:nth-child(7) { height: 8px; animation-delay: 0.6s; }
+  @keyframes wave { 0%,100% { transform:scaleY(0.5); opacity:0.4; } 50% { transform:scaleY(1); opacity:1; } }
+
+  .ph-voice-coming {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.2);
+    margin-top: 8px;
+    text-align: center;
+    line-height: 1.6;
+  }
+
+  .phone-caption { text-align: center; width: 100%; max-width: 300px; }
+  .phone-caption-title { font-size: 14px; font-weight: 500; color: var(--ink); margin-bottom: 5px; }
+  .phone-caption-desc { font-size: 12px; color: var(--ink-muted); line-height: 1.5; margin-bottom: 6px; }
+  .phone-caption-sub { font-family: var(--mono); font-size: 10px; color: var(--ink-faint); letter-spacing: 0.08em; }
+
+  .figma-live-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    border: 1px solid var(--accent-muted);
+    padding: 3px 8px;
+    margin-top: 4px;
+  }
+
+  .figma-live-dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  /* ── COMPETITIVE POSITIONING ── */
+  .comp-section {
+    background: var(--ink);
+    padding: 72px 48px;
+    border-top: 1px solid #1a1a1a;
+  }
+
+  .comp-inner {
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  .comp-eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 48px;
+  }
+
+  .comp-eyebrow::before {
+    content: '';
+    display: block;
+    width: 24px;
+    height: 1px;
+    background: var(--accent);
+  }
+
+  .comp-reframe {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 64px;
+    padding-bottom: 48px;
+    border-bottom: 1px solid #1e1e1e;
+    margin-bottom: 48px;
+    align-items: start;
+  }
+
+  .comp-reframe-title {
+    font-family: var(--serif);
+    font-size: clamp(22px, 2.5vw, 32px);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.25;
+    color: var(--paper);
+  }
+
+  .comp-reframe-title em { font-style: italic; color: var(--accent); }
+
+  .comp-reframe-body {
+    font-size: 15px;
+    line-height: 1.8;
+    color: #b8b4ac;
+    font-weight: 300;
+  }
+
+  .comp-reframe-body strong { color: var(--paper); font-weight: 500; }
+
+  .comp-failures {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: #1a1a1a;
+    border: 1px solid #1a1a1a;
+    margin-bottom: 48px;
+  }
+
+  .comp-failure-card { background: #0d0d0d; padding: 32px 28px; }
+
+  .comp-failure-num {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent);
+    opacity: 0.7;
+    margin-bottom: 16px;
+  }
+
+  .comp-failure-label {
+    font-family: var(--serif);
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--paper);
+    margin-bottom: 10px;
+    line-height: 1.25;
+  }
+
+  .comp-failure-then {
+    font-size: 12px;
+    color: #555;
+    line-height: 1.6;
+    margin-bottom: 16px;
+    font-family: var(--mono);
+    border-left: 2px solid #2a2a2a;
+    padding-left: 12px;
+  }
+
+  .comp-failure-now { font-size: 13px; color: #aaa; line-height: 1.65; font-weight: 300; }
+  .comp-failure-now strong { color: #e0e0e0; font-weight: 500; }
+
+  .comp-bottom {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 48px;
+    align-items: start;
+  }
+
+  .comp-timing {
+    border-left: 2px solid var(--accent);
+    padding: 20px 24px;
+    background: rgba(200, 75, 47, 0.05);
+  }
+
+  .comp-timing-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent);
+    opacity: 0.8;
+    margin-bottom: 14px;
+  }
+
+  .comp-timing-list { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+
+  .comp-timing-list li {
+    font-size: 13px;
+    color: #aaa;
+    line-height: 1.5;
+    font-weight: 300;
+    display: grid;
+    grid-template-columns: 100px 1fr;
+    gap: 12px;
+  }
+
+  .tl-tech { font-family: var(--mono); font-size: 11px; color: var(--paper); font-weight: 500; padding-top: 1px; }
+
+  .comp-market { display: flex; flex-direction: column; gap: 14px; }
+
+  .comp-market-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: #808080;
+    margin-bottom: 2px;
+  }
+
+  .comp-competitor {
+    background: #0a0a0a;
+    border: 1px solid #1a1a1a;
+    border-left: 2px solid #2a2a2a;
+    padding: 16px 20px;
+  }
+
+  .comp-competitor-name { font-family: var(--mono); font-size: 11px; color: var(--paper); letter-spacing: 0.05em; margin-bottom: 4px; }
+  .comp-competitor-desc { font-size: 12px; color: #707070; line-height: 1.5; font-weight: 300; margin-bottom: 8px; }
+  .comp-competitor-diff { font-size: 12px; color: #909090; line-height: 1.5; font-weight: 300; }
+  .comp-competitor-diff strong { color: #c0c0c0; font-weight: 400; }
+
+  .comp-market-note {
+    font-size: 13px;
+    color: #7a7a7a;
+    line-height: 1.7;
+    font-weight: 300;
+    font-style: italic;
+    border-top: 1px solid #1e1e1e;
+    padding-top: 16px;
+  }
+
+  .comp-market-note strong { color: #aaa; font-weight: 400; font-style: normal; }
+
+  /* ── GTM SECTION ── */
+  .gtm-section {
+    background: var(--ink);
+    border-top: 1px solid #1a1a1a;
+    padding: 88px 0;
+    margin-bottom: 0;
+  }
+
+  .gtm-wrap {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 48px;
+  }
+
+  .gtm-header {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 64px;
+    align-items: end;
+    padding-bottom: 56px;
+    border-bottom: 1px solid #1e1e1e;
+    margin-bottom: 56px;
+  }
+
+  .gtm-eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .gtm-eyebrow::before {
+    content: '';
+    display: block;
+    width: 24px;
+    height: 1px;
+    background: var(--accent);
+  }
+
+  .gtm-title {
+    font-family: var(--serif);
+    font-size: clamp(26px, 3vw, 38px);
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+    color: var(--paper);
+  }
+
+  .gtm-title em { font-style: italic; color: var(--accent); }
+
+  .gtm-header-desc {
+    font-size: 15px;
+    line-height: 1.8;
+    color: #8a8a8a;
+    font-weight: 300;
+  }
+
+  .gtm-header-desc strong { color: #c0c0c0; font-weight: 400; }
+
+  /* Three-card grid */
+  .gtm-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: #1a1a1a;
+    border: 1px solid #1a1a1a;
+  }
+
+  .gtm-card {
+    background: #0d0d0d;
+    padding: 44px 36px;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    transition: background 0.2s;
+  }
+
+  .gtm-card:hover { background: #111; }
+
+  .gtm-card-num {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: #666;
+  }
+
+  .gtm-card-title {
+    font-family: var(--serif);
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--paper);
+    line-height: 1.3;
+    margin-bottom: 28px;
+  }
+
+  /* Insight block — left-bordered callout inside card */
+  .gtm-insight {
+    border-left: 2px solid var(--accent);
+    padding: 14px 16px;
+    background: rgba(200, 75, 47, 0.05);
+    margin-bottom: 16px;
+  }
+
+  .gtm-insight-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 8px;
+    opacity: 0.8;
+  }
+
+  .gtm-insight-text {
+    font-size: 13px;
+    line-height: 1.7;
+    color: #aaa;
+    font-weight: 300;
+  }
+
+  .gtm-insight-text strong { color: #e0e0e0; font-weight: 500; }
+
+  .gtm-body {
+    font-size: 13px;
+    line-height: 1.75;
+    color: #7a7a7a;
+    font-weight: 300;
+    margin-top: 12px;
+  }
+
+  /* Rejected models list */
+  .gtm-rejected-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: #666;
+    margin-bottom: 14px;
+    margin-top: 4px;
+  }
+
+  .rejected-row {
+    display: grid;
+    grid-template-columns: 14px 1fr;
+    gap: 10px;
+    align-items: start;
+    padding: 10px 0;
+    border-bottom: 1px solid #161616;
+  }
+
+  .rejected-row:last-of-type { border-bottom: none; }
+
+  .rejected-x {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: #6a2a1a;
+    margin-top: 1px;
+  }
+
+  .rejected-model {
+    font-size: 13px;
+    font-weight: 500;
+    color: #b0b0b0;
+    margin-bottom: 3px;
+  }
+
+  .rejected-reason {
+    font-size: 12px;
+    color: #707070;
+    line-height: 1.5;
+    font-weight: 300;
+  }
+
+  /* Acquisition channels bar chart */
+  .acq-channels { margin-top: 4px; }
+
+  .acq-row {
+    display: grid;
+    grid-template-columns: 116px 1fr 36px;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+
+  .acq-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    color: #787878;
+    white-space: nowrap;
+  }
+
+  .acq-bar-track {
+    height: 3px;
+    background: #1a1a1a;
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .acq-bar-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 2px;
+    width: 0;
+    transition: width 1.2s ease;
+  }
+
+  .acq-pct {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: #686868;
+    text-align: right;
+  }
+
+  .acq-surprise {
+    margin-top: 20px;
+    border: 1px solid #1a1a1a;
+    border-left: 2px solid #2a2a2a;
+    padding: 14px 16px;
+    background: #0a0a0a;
+  }
+
+  .acq-surprise-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: #666;
+    margin-bottom: 8px;
+  }
+
+  .acq-surprise-text {
+    font-size: 13px;
+    line-height: 1.7;
+    color: #7a7a7a;
+    font-weight: 300;
+  }
+
+  .acq-surprise-text strong { color: #b0b0b0; font-weight: 400; }
+  /* ── ENTERPRISE SECTION ── */
+  .enterprise-section {
+    background: var(--paper);
+    border-top: 4px solid var(--ink);
+    padding: 96px 0 80px;
+  }
+
+  .enterprise-wrap {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 48px;
+  }
+
+  /* Section opener */
+  .ent-opener {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 64px;
+    align-items: end;
+    padding-bottom: 64px;
+    border-bottom: 1px solid var(--rule);
+    margin-bottom: 72px;
+  }
+
+  .ent-eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .ent-eyebrow::before {
+    content: '';
+    display: block;
+    width: 24px;
+    height: 1px;
+    background: var(--accent);
+  }
+
+  .ent-opener-title {
+    font-family: var(--serif);
+    font-size: clamp(26px, 3vw, 40px);
+    font-weight: 900;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+    color: var(--ink);
+  }
+
+  .ent-opener-title em {
+    font-style: italic;
+    color: var(--accent);
+  }
+
+  .ent-opener-body {
+    font-size: 15px;
+    line-height: 1.8;
+    color: var(--ink-muted);
+    font-weight: 300;
+  }
+
+  .ent-opener-body strong {
+    color: var(--ink);
+    font-weight: 500;
+  }
+
+  /* Leadership trait pills */
+  .ent-traits {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 24px;
+  }
+
+  .ent-trait {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink);
+    border: 1px solid var(--rule);
+    padding: 6px 14px;
+    background: var(--paper-dark);
+  }
+
+  /* ── GENENTECH — Lead card, full width ── */
+  .ent-genentech {
+    background: var(--ink);
+    padding: 56px;
+    margin-bottom: 1px;
+  }
+
+  .ent-company-eyebrow {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 32px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .ent-company-eyebrow::before {
+    content: '';
+    display: block;
+    width: 20px;
+    height: 1px;
+    background: var(--accent);
+  }
+
+  .ent-genentech-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 64px;
+    align-items: start;
+  }
+
+  .ent-genentech-left {}
+
+  .ent-headline {
+    font-family: var(--serif);
+    font-size: clamp(20px, 2.4vw, 30px);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+    color: var(--paper);
+    margin-bottom: 20px;
+  }
+
+  .ent-headline em {
+    font-style: italic;
+    color: var(--accent);
+  }
+
+  .ent-body {
+    font-size: 14px;
+    line-height: 1.8;
+    color: #b0aca4;
+    font-weight: 300;
+    margin-bottom: 20px;
+  }
+
+  .ent-body strong {
+    color: var(--paper);
+    font-weight: 500;
+  }
+
+  /* Pressure stats row */
+  .ent-pressure-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: #1a1a1a;
+    border: 1px solid #1a1a1a;
+    margin-bottom: 28px;
+  }
+
+  .ent-pressure-stat {
+    background: #0a0a0a;
+    padding: 20px 20px;
+  }
+
+  .ent-pressure-num {
+    font-family: var(--serif);
+    font-size: clamp(22px, 2.5vw, 30px);
+    font-weight: 900;
+    letter-spacing: -0.03em;
+    color: var(--paper);
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+
+  .ent-pressure-num span { color: var(--accent); }
+
+  .ent-pressure-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    color: #666;
+    line-height: 1.4;
+  }
+
+  /* Right side: decisions and skills */
+  .ent-genentech-right {}
+
+  .ent-decision-block {
+    border-left: 2px solid var(--accent);
+    padding: 16px 20px;
+    background: rgba(200,75,47,0.05);
+    margin-bottom: 16px;
+  }
+
+  .ent-decision-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent);
+    opacity: 0.8;
+    margin-bottom: 8px;
+  }
+
+  .ent-decision-text {
+    font-size: 13px;
+    line-height: 1.7;
+    color: #aaa;
+    font-weight: 300;
+  }
+
+  .ent-decision-text strong {
+    color: #e0e0e0;
+    font-weight: 500;
+  }
+
+  .ent-skill-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 20px;
+  }
+
+  .ent-skill-tag {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #666;
+    border: 1px solid #222;
+    padding: 5px 10px;
+  }
+
+  /* ── LUMENTUM + SVB — side by side ── */
+  .ent-two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background: var(--rule);
+  }
+
+  .ent-card {
+    background: var(--paper-dark);
+    padding: 44px 40px;
+  }
+
+  .ent-card-eyebrow {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .ent-card-eyebrow::before {
+    content: '';
+    display: block;
+    width: 16px;
+    height: 1px;
+    background: var(--ink-faint);
+  }
+
+  .ent-card-headline {
+    font-family: var(--serif);
+    font-size: clamp(18px, 2vw, 24px);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.25;
+    color: var(--ink);
+    margin-bottom: 16px;
+  }
+
+  .ent-card-headline em {
+    font-style: italic;
+    color: var(--accent);
+  }
+
+  .ent-card-body {
+    font-size: 13px;
+    line-height: 1.8;
+    color: var(--ink-muted);
+    font-weight: 300;
+    margin-bottom: 20px;
+  }
+
+  .ent-card-body strong {
+    color: var(--ink);
+    font-weight: 500;
+  }
+
+  .ent-card-metric {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    color: var(--accent);
+    border: 1px solid var(--accent-muted);
+    padding: 6px 12px;
+    margin-bottom: 20px;
+    background: rgba(200,75,47,0.04);
+  }
+
+  .ent-card-decision {
+    border-left: 2px solid var(--rule);
+    padding: 12px 16px;
+    background: var(--paper);
+    margin-bottom: 16px;
+  }
+
+  .ent-card-decision-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: 6px;
+  }
+
+  .ent-card-decision-text {
+    font-size: 13px;
+    line-height: 1.65;
+    color: var(--ink-muted);
+    font-weight: 300;
+  }
+
+  .ent-card-decision-text strong {
+    color: var(--ink);
+    font-weight: 500;
+  }
+
+  /* Closing trust statement */
+  .ent-closing {
+    margin-top: 64px;
+    padding: 40px 48px;
+    background: var(--ink);
+    display: grid;
+    grid-template-columns: 64px 1fr;
+    gap: 32px;
+    align-items: center;
+  }
+
+  .ent-closing-mark {
+    font-family: var(--serif);
+    font-size: 48px;
+    font-weight: 900;
+    color: var(--accent);
+    line-height: 1;
+    opacity: 0.4;
+  }
+
+  .ent-closing-text {
+    font-size: 16px;
+    line-height: 1.75;
+    color: #b8b4ac;
+    font-weight: 300;
+    font-style: italic;
+  }
+
+  .ent-closing-text strong {
+    color: var(--paper);
+    font-weight: 500;
+    font-style: normal;
+  }
+
+  /* ── LAB SECTION ── */
+  .lab-section {
+    background: var(--ink);
+    border-top: 1px solid #1a1a1a;
+    padding: 96px 0 80px;
+  }
+
+  .lab-wrap {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 48px;
+  }
+
+  .lab-header {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 64px;
+    align-items: end;
+    padding-bottom: 56px;
+    border-bottom: 1px solid #1e1e1e;
+    margin-bottom: 56px;
+  }
+
+  .lab-eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .lab-eyebrow::before {
+    content: '';
+    display: block;
+    width: 24px;
+    height: 1px;
+    background: var(--accent);
+  }
+
+  .lab-title {
+    font-family: var(--serif);
+    font-size: clamp(24px, 3vw, 38px);
+    font-weight: 900;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+    color: var(--paper);
+  }
+
+  .lab-title em {
+    font-style: italic;
+    color: var(--accent);
+  }
+
+  .lab-header-body {
+    font-size: 15px;
+    line-height: 1.8;
+    color: #b8b4ac;
+    font-weight: 300;
+  }
+
+  .lab-header-body strong {
+    color: var(--paper);
+    font-weight: 500;
+  }
+
+  /* Project cards */
+  .lab-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background: #1a1a1a;
+    border: 1px solid #1a1a1a;
+  }
+
+  .lab-card {
+    background: #0a0a0a;
+    padding: 44px 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .lab-card-eyebrow {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent);
+    opacity: 0.7;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .lab-card-eyebrow::before {
+    content: '';
+    display: block;
+    width: 14px;
+    height: 1px;
+    background: var(--accent);
+    opacity: 0.6;
+  }
+
+  .lab-card-name {
+    font-family: var(--serif);
+    font-size: clamp(20px, 2.2vw, 26px);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+    color: var(--paper);
+    margin-bottom: 6px;
+  }
+
+  .lab-card-tagline {
+    font-size: 13px;
+    color: #707070;
+    font-family: var(--mono);
+    letter-spacing: 0.04em;
+    margin-bottom: 24px;
+  }
+
+  .lab-card-problem {
+    border-left: 2px solid #222;
+    padding: 12px 16px;
+    margin-bottom: 20px;
+    background: #0d0d0d;
+  }
+
+  .lab-card-problem-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: #555;
+    margin-bottom: 6px;
+  }
+
+  .lab-card-problem-text {
+    font-size: 13px;
+    line-height: 1.65;
+    color: #888;
+    font-weight: 300;
+  }
+
+  .lab-card-decision {
+    border-left: 2px solid var(--accent);
+    padding: 12px 16px;
+    margin-bottom: 24px;
+    background: rgba(200,75,47,0.04);
+  }
+
+  .lab-card-decision-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent);
+    opacity: 0.8;
+    margin-bottom: 6px;
+  }
+
+  .lab-card-decision-text {
+    font-size: 13px;
+    line-height: 1.65;
+    color: #aaa;
+    font-weight: 300;
+  }
+
+  .lab-card-decision-text strong {
+    color: #e0e0e0;
+    font-weight: 500;
+  }
+
+  .lab-card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: auto;
+    padding-top: 20px;
+    border-top: 1px solid #1a1a1a;
+  }
+
+  .lab-card-stack {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .lab-stack-tag {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #555;
+    border: 1px solid #1e1e1e;
+    padding: 4px 8px;
+  }
+
+  .lab-card-link {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    text-decoration: none;
+    border: 1px solid rgba(200,75,47,0.3);
+    padding: 6px 14px;
+    transition: background 0.2s ease;
+    white-space: nowrap;
+  }
+
+  .lab-card-link:hover {
+    background: rgba(200,75,47,0.1);
+  }
+
+  /* Lab closing note */
+  .lab-note {
+    margin-top: 48px;
+    padding: 24px 32px;
+    border-left: 2px solid #2a2a2a;
+    background: #080808;
+  }
+
+  .lab-note-text {
+    font-size: 13px;
+    line-height: 1.8;
+    color: #666;
+    font-weight: 300;
+    font-style: italic;
+  }
+
+  .lab-note-text strong {
+    color: #999;
+    font-weight: 400;
+    font-style: normal;
+  }
+
+  /* ── CONTACT / FOOTER ── */
+  .contact-section {
+    background: var(--paper);
+    border-top: 1px solid var(--rule);
+    padding: 96px 48px 0;
+  }
+
+  .contact-wrap {
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  .contact-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 96px;
+    align-items: start;
+    padding-bottom: 80px;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .contact-left {}
+
+  .contact-eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .contact-eyebrow::before {
+    content: '';
+    display: block;
+    width: 24px;
+    height: 1px;
+    background: var(--accent);
+  }
+
+  .contact-title {
+    font-family: var(--serif);
+    font-size: clamp(28px, 3.5vw, 48px);
+    font-weight: 900;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+    color: var(--ink);
+    margin-bottom: 28px;
+  }
+
+  .contact-title em {
+    font-style: italic;
+    color: var(--accent);
+  }
+
+  .contact-body {
+    font-size: 15px;
+    line-height: 1.8;
+    color: var(--ink-muted);
+    font-weight: 300;
+    margin-bottom: 36px;
+  }
+
+  .contact-body strong {
+    color: var(--ink);
+    font-weight: 500;
+  }
+
+  .contact-cta-row {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+
+  .contact-btn-primary {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--paper);
+    background: var(--ink);
+    border: 1px solid var(--ink);
+    padding: 14px 28px;
+    text-decoration: none;
+    transition: background 0.2s, color 0.2s;
+  }
+
+  .contact-btn-primary:hover {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+
+  .contact-btn-ghost {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--ink);
+    background: transparent;
+    border: 1px solid var(--rule);
+    padding: 14px 28px;
+    text-decoration: none;
+    transition: border-color 0.2s, color 0.2s;
+  }
+
+  .contact-btn-ghost:hover {
+    border-color: var(--ink);
+  }
+
+  /* Right side: direct links */
+  .contact-right {
+    padding-top: 8px;
+  }
+
+  .contact-links {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .contact-link-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 0;
+    border-bottom: 1px solid var(--rule);
+    text-decoration: none;
+    group: true;
+  }
+
+  .contact-link-item:first-child {
+    border-top: 1px solid var(--rule);
+  }
+
+  .contact-link-left {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .contact-link-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+
+  .contact-link-value {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--ink);
+    transition: color 0.2s;
+  }
+
+  .contact-link-item:hover .contact-link-value {
+    color: var(--accent);
+  }
+
+  .contact-link-arrow {
+    font-size: 18px;
+    color: var(--rule);
+    transition: color 0.2s, transform 0.2s;
+  }
+
+  .contact-link-item:hover .contact-link-arrow {
+    color: var(--accent);
+    transform: translateX(4px);
+  }
+
+  /* Availability status */
+  .contact-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #2a7a50;
+    border: 1px solid rgba(42,122,80,0.25);
+    padding: 8px 16px;
+    background: rgba(42,122,80,0.04);
+    margin-bottom: 32px;
+  }
+
+  .contact-status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #2a7a50;
+    animation: pulse-green 2s infinite;
+  }
+
+  @keyframes pulse-green {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  /* Footer bar */
+  .footer-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 28px 0;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  .footer-mark {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    color: var(--ink-faint);
+  }
+
+  .footer-mark strong {
+    color: var(--ink);
+    font-weight: 500;
+  }
+
+  .footer-note {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    color: var(--ink-faint);
+  }
+
+  /* ═══════════════════════════════════════
+     MOBILE RESPONSIVE
+  ═══════════════════════════════════════ */
+
+  @media (max-width: 900px) {
+
+    /* Nav */
+    nav { padding: 16px 24px; }
+    nav ul { gap: 20px; }
+
+    /* Credential bar */
+    .cred-items { gap: 20px; padding: 0 24px; }
+
+    /* Hero */
+    .hero {
+      grid-template-columns: 1fr;
+      padding: 64px 24px 56px;
+      gap: 48px;
+    }
+    .hero-right { border-left: none; border-top: 1px solid var(--rule); padding-top: 40px; }
+
+    /* Section wrap */
+    .section-wrap { padding: 56px 24px; }
+
+    /* Problem section */
+    .prob-inequality { padding: 56px 24px 40px; }
+    .prob-moments {
+      grid-template-columns: 1fr;
+      padding: 0;
+    }
+    .prob-moment { padding: 36px 24px; }
+    .prob-origin { padding: 32px 24px 40px; }
+    .prob-origin-inner {
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+
+    /* Meta strip */
+    .mira-meta { grid-template-columns: 1fr 1fr; }
+
+    /* Competitive section */
+    .comp-section { padding: 56px 24px; }
+    .comp-reframe { grid-template-columns: 1fr; gap: 24px; }
+    .comp-failures { grid-template-columns: 1fr; }
+    .comp-bottom { grid-template-columns: 1fr; gap: 32px; }
+
+    /* Decisions grid */
+    .decisions-grid { grid-template-columns: 1fr; }
+
+    /* Pipeline demo */
+    .demo-framing { flex-direction: column; gap: 16px; }
+
+    /* Mobile screens / Figma */
+    .mobile-screens { grid-template-columns: 1fr; gap: 40px; }
+
+    /* GTM */
+    .gtm-section { padding: 56px 24px; }
+    .gtm-grid { grid-template-columns: 1fr; }
+    .gtm-pricing-row { grid-template-columns: 1fr; }
+    .gtm-acq-row { grid-template-columns: 1fr 1fr; }
+
+    /* Outcomes */
+    .outcome-strip {
+      grid-template-columns: 1fr;
+      gap: 32px;
+    }
+    .outcome-divider-v { display: none; }
+
+    /* Enterprise */
+    .enterprise-section { padding: 64px 0 56px; }
+    .enterprise-wrap { padding: 0 24px; }
+    .ent-opener { grid-template-columns: 1fr; gap: 32px; }
+    .ent-genentech { padding: 36px 24px; }
+    .ent-genentech-grid { grid-template-columns: 1fr; gap: 40px; }
+    .ent-pressure-row { grid-template-columns: 1fr; gap: 1px; }
+    .ent-two-col { grid-template-columns: 1fr; }
+    .ent-card { padding: 36px 24px; }
+    .ent-closing { grid-template-columns: 1fr; gap: 16px; padding: 32px 24px; }
+    .ent-closing-mark { font-size: 36px; }
+
+    /* Lab */
+    .lab-section { padding: 64px 0 56px; }
+    .lab-wrap { padding: 0 24px; }
+    .lab-header { grid-template-columns: 1fr; gap: 24px; }
+    .lab-grid { grid-template-columns: 1fr; }
+    .lab-card { padding: 36px 24px; }
+    .lab-card-footer { flex-direction: column; align-items: flex-start; gap: 16px; }
+
+    /* Contact */
+    .contact-section { padding: 64px 24px 0; }
+    .contact-grid { grid-template-columns: 1fr; gap: 48px; }
+    .footer-bar { flex-direction: column; gap: 8px; text-align: center; padding: 24px; }
+  }
+
+  @media (max-width: 540px) {
+
+    /* Nav — hide text labels, keep mark */
+    nav ul { display: none; }
+    nav { justify-content: space-between; }
+
+    /* Credential bar — scroll horizontally */
+    .credential-bar { overflow-x: auto; }
+    .cred-items { flex-wrap: nowrap; min-width: max-content; padding: 0 20px; }
+
+    /* Hero */
+    .hero { padding: 48px 20px 40px; }
+    h1 { font-size: clamp(32px, 8vw, 48px); }
+
+    /* Typography scale */
+    .prob-inequality-statement { font-size: clamp(24px, 7vw, 36px); }
+    .ent-opener-title { font-size: clamp(24px, 7vw, 36px); }
+    .lab-title { font-size: clamp(24px, 7vw, 36px); }
+    .contact-title { font-size: clamp(24px, 7vw, 36px); }
+
+    /* Meta strip — 2x2 */
+    .mira-meta { grid-template-columns: 1fr 1fr; }
+    .meta-cell { padding: 20px 16px; }
+
+    /* Competitive failures — single col already handled */
+    .comp-timing-list li { grid-template-columns: 1fr; gap: 4px; }
+    .tl-tech { font-size: 10px; }
+
+    /* Decisions */
+    .decision-card { padding: 24px 20px; }
+
+    /* Genentech pressure stats */
+    .ent-pressure-stat { padding: 16px; }
+    .ent-pressure-num { font-size: 24px; }
+
+    /* Section padding */
+    .prob-inequality { padding: 40px 20px 32px; }
+    .prob-moment { padding: 28px 20px; }
+    .comp-section { padding: 40px 20px; }
+    .ent-genentech { padding: 28px 20px; }
+    .ent-card { padding: 28px 20px; }
+    .lab-card { padding: 28px 20px; }
+    .contact-section { padding: 48px 20px 0; }
+
+    /* CTAs */
+    .contact-cta-row { flex-direction: column; }
+    .contact-btn-primary, .contact-btn-ghost { text-align: center; }
+  }
+
+  /* ── LARGE SCREEN (1440px+) ── */
+  @media (min-width: 1440px) {
+    .hero { padding: 100px 80px 100px; }
+    .section-wrap { padding: 80px 80px; }
+    .prob-inequality { padding: 80px 80px 64px; }
+    .prob-moments { grid-template-columns: 1fr 1fr; }
+    .prob-moment { padding: 56px 64px; }
+    .prob-origin { padding: 48px 80px 64px; }
+    .comp-section { padding: 80px 80px; }
+    .enterprise-wrap { padding: 0 80px; }
+    .lab-wrap { padding: 0 80px; }
+    .contact-section { padding: 100px 80px 0; }
+    .ent-genentech { padding: 56px 64px; }
+    .ent-card { padding: 52px 48px; }
+  }
+
+</style>
+</head>
+<body>
+
+
+
+<nav>
+  <div class="nav-mark" style="display:flex;align-items:center;gap:10px;">
+  <img src="profile-photo.png" alt="Kin Hai" style="width:34px;height:34px;border-radius:50%;object-fit:cover;object-position:center top;border:1.5px solid var(--rule);">
+  <span>KIN <span style="color:var(--accent)">HAI</span></span>
+</div>
+  <ul>
+    <li><a href="#mira">Mira</a></li>
+    <li><a href="#enterprise">Enterprise</a></li>
+    <li><a href="#lab">Lab</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+</nav>
+
+<div class="credential-bar">
+  <div class="cred-items">
+    <div class="cred-item">
+      <div class="cred-dot"></div>
+      <div class="cred-value">$500M+</div>
+      <div class="cred-label">Programs Delivered</div>
+    </div>
+    <div class="cred-item">
+      <div class="cred-dot"></div>
+      <div class="cred-value">#1 Ranked</div>
+      <div class="cred-label">AIPM Accelerator · 20+ Products</div>
+    </div>
+    <div class="cred-item">
+      <div class="cred-dot"></div>
+      <div class="cred-value">2× CEO Award</div>
+      <div class="cred-label">Lumentum · Genentech</div>
+    </div>
+    <div class="cred-item">
+      <div class="cred-dot"></div>
+      <div class="cred-value">MIT AI/ML</div>
+      <div class="cred-label">Top 10% · Certificate · <a href="mit-certificate.jpg" target="_blank" style="color:var(--accent);text-decoration:none;font-size:9px;">view ↗</a></div>
+    </div>
+    <div class="cred-item">
+      <div class="cred-dot"></div>
+      <div class="cred-value">FDA · SOX · PSD2</div>
+      <div class="cred-label">Regulatory Expertise</div>
+    </div>
+  </div>
+</div>
+
+<section class="hero">
+  <div class="hero-left">
+    <div class="available-badge fade-up">
+      <div class="available-dot"></div>
+      <span class="available-text">Available Now</span>
+    </div>
+
+    <div class="eyebrow fade-up">Senior AI Product Manager</div>
+
+    <h1 class="fade-up">
+      I build AI that<br>
+      <em>acts,</em> not just<br>
+      answers.
+    </h1>
+
+    <p class="hero-statement fade-up">
+      Founding PM of <strong>Mira</strong> — a #1-ranked agentic voice assistant built from zero —
+      and the PM who <strong>challenged a failing $500M global program, staked my reputation on a new process,
+      and delivered Genentech's only on-time go-live in company history.</strong>
+      I specialize in the hard part: reliable AI that makes real decisions in high-stakes environments.
+    </p>
+
+    <div class="cta-row fade-up">
+      <a href="#mira" class="btn-primary">View Mira Case Study</a>
+      <a href="Kin_Hai_Resume.pdf" class="btn-ghost" target="_blank">Download Resume</a>
+    </div>
+  </div>
+
+  <div class="hero-right">
+    <div class="proof-label">Selected proof points</div>
+
+    <div class="proof-item">
+      <div class="proof-num">01</div>
+      <div>
+        <div class="proof-title">Mira — Agentic Voice AI</div>
+        <div class="proof-desc">Built from zero: RAG pipelines, GPT-4 function calling, intent-classified multi-agent routing. 70% WAU in closed beta. Ranked #1 among 20+ products.</div>
+        <div class="proof-tag">0→1 · Agentic · Production</div>
+      </div>
+    </div>
+
+    <div class="proof-item">
+      <div class="proof-num">02</div>
+      <div>
+        <div class="proof-title">Genentech — $500M SAP Crisis</div>
+        <div class="proof-desc">Only on-time go-live in company history. Created Day-in-the-Life testing framework — 60% defect reduction, adopted across 5 sites and 15 teams.</div>
+        <div class="proof-tag">High-Stakes · GxP · CEO Award</div>
+      </div>
+    </div>
+
+    <div class="proof-item">
+      <div class="proof-num">03</div>
+      <div>
+        <div class="proof-title">SVB — Said No to the COO. Delivered 6 Months Early.</div>
+        <div class="proof-desc">Pushed back on the COO's aggressive PSD2 roadmap with a structured mitigation strategy. Plan accepted. Delivered 6 months early. Avoided $20M+ in regulatory penalties.</div>
+        <div class="proof-tag">Regulatory · API · Platform</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── MIRA CASE STUDY ── -->
+<section class="mira-section" id="mira">
+
+  <!-- ── PROBLEM SECTION ── -->
+  <div class="mira-problem">
+
+    <!-- Part 1: Inequality statement -->
+    <div style="background:var(--ink); border-bottom:1px solid #1e1e1e;">
+      <div class="prob-inequality">
+        <div class="prob-inequality-eyebrow">The Problem · Why Mira Exists</div>
+        <h2 class="prob-inequality-statement">
+          Billionaires get teams of assistants<br>
+          to run their lives.<br>
+          <em>Everyone else gets nothing.</em>
+        </h2>
+        <p class="prob-inequality-sub">
+          C-suite executives have people who manage their calendars, field their emails, coordinate their meetings,
+          and make sure they show up for what matters. <strong>That amplification has never existed for anyone else</strong> —
+          not the realtor driving between showings, not the working parent juggling three school calendars,
+          not the consultant managing six client relationships from their phone.
+          The tools they get instead — calendar apps, voice bots, scheduling links — were built for people sitting at desks.
+          They were never built for the 60% of a mobile professional's day when a screen simply isn't an option.
+        </p>
+      </div>
+    </div>
+
+    <!-- Part 2: Two persona moments -->
+    <div class="prob-moments">
+
+      <div class="prob-moment">
+        <div class="prob-moment-persona">Persona 01 · Real Estate Agent</div>
+        <h3 class="prob-moment-scene">She's on the 101, between showings.<br>A client texts to reschedule.<br><em>She can't look at her phone.</em></h3>
+        <p class="prob-moment-body">
+          By the time she finds a safe place to pull over — twelve minutes later — the client has already
+          booked with another agent. Not because she wasn't responsive. Because the gap between event and response
+          was just long enough to lose the relationship. <strong>She didn't miss the meeting. She missed the window.</strong>
+          Every existing tool required her to stop, look, and tap. None of them could act for her while she drove.
+        </p>
+        <span class="prob-moment-cost">Cost: avg. $15K commission · happens multiple times per year</span>
+      </div>
+
+      <div class="prob-moment">
+        <div class="prob-moment-persona">Persona 02 · Working Parent</div>
+        <h3 class="prob-moment-scene">Three kids. Four calendars.<br>One double-booking every two weeks.<br><em>Every single one is someone's fault.</em></h3>
+        <p class="prob-moment-body">
+          School pickups, soccer practice, client calls, partner commitments — spread across Google, iCloud,
+          and Outlook with no shared logic between them. <strong>The coordination overhead isn't a productivity problem.
+          It's a relationship problem.</strong> Every missed pickup, every double-booked evening, every forgotten
+          appointment is a small fracture. The scheduling app didn't fail — it just showed a grid. Nobody acted.
+        </p>
+        <span class="prob-moment-cost">Cost: 8–12 hrs/week · recurring conflict · compounding stress</span>
+      </div>
+
+    </div>
+
+    <!-- Part 3: Origin / insight -->
+    <div class="prob-origin">
+      <div class="prob-origin-inner">
+        <div class="prob-origin-label">Why I built this</div>
+        <p class="prob-origin-text">
+          After 127 interviews across realtors and working parents, the pattern wasn't
+          "people need better scheduling software." It was something more specific:
+          <strong>the problem only happens when they can't use their phone.</strong>
+          Every tool assumed a seated user with two free hands and a screen. Nobody had built
+          for the moments that actually break people's days — driving, walking between meetings,
+          hands full, eyes elsewhere. The assistant gap isn't a feature gap. It's an
+          <strong>access gap</strong> — and voice is the only interface that closes it.
+          Mira isn't trying to be a smarter calendar. It's trying to be the first tool that works
+          when every other tool requires you to stop what you're doing.
+        </p>
+      </div>
+    </div>
+
+  </div><!-- /mira-problem -->
+
+  <!-- Meta strip -->
+  <div class="mira-meta">
+    <div class="meta-cell">
+      <div class="meta-label">My Role</div>
+      <div class="meta-value">Founding PM · Full product ownership</div>
+    </div>
+    <div class="meta-cell">
+      <div class="meta-label">Timeline</div>
+      <div class="meta-value">0 → working beta in 6 months</div>
+    </div>
+    <div class="meta-cell">
+      <div class="meta-label">User Research</div>
+      <div class="meta-value">127 interviews · realtors & working parents</div>
+    </div>
+    <div class="meta-cell">
+      <div class="meta-label">Team</div>
+      <div class="meta-value">8 people · equity-based · no external funding</div>
+    </div>
+    <div class="meta-cell">
+      <div class="meta-label">Stack</div>
+      <div class="meta-value">GPT-4 · ElevenLabs · FastAPI · AWS · OAuth 2.0</div>
+    </div>
+  </div>
+
+  <!-- ── COMPETITIVE POSITIONING ── -->
+  <div class="comp-section reveal" id="competitive">
+    <div class="comp-inner">
+
+      <div class="comp-eyebrow">Why Mira · Market Context</div>
+
+      <!-- Reframe statement -->
+      <div class="comp-reframe">
+        <div>
+          <h3 class="comp-reframe-title">Voice didn't fail because voice is wrong.<br>It failed because Siri and Alexa were built as <em>bots</em>, not agents.</h3>
+        </div>
+        <p class="comp-reframe-body">
+          Previous voice assistants were command-line interfaces with speech attached. They had no context, no
+          ability to act autonomously, and no way to complete a workflow without the user supervising every step.
+          <strong>The technology wasn't the problem — the architecture was.</strong> GPT-4 context windows,
+          95%+ transcription accuracy, and sub-500ms latency changed what's buildable. Mira is designed
+          for that inflection point: a voice-native agent that executes end-to-end, not just listens and responds.
+        </p>
+      </div>
+
+      <!-- Three failure modes -->
+      <div class="comp-failures">
+
+        <div class="comp-failure-card">
+          <div class="comp-failure-num">Failure 01</div>
+          <div class="comp-failure-label">No context retention</div>
+          <div class="comp-failure-then">
+            "Schedule dinner with Sarah" → "When?" → "Friday" → "What time?" → "7pm" → "Where?" → user gives up.
+          </div>
+          <p class="comp-failure-now">Every interaction started from zero. No memory of who your clients were, what you discussed yesterday, or that Fridays are always blocked. <strong>Mira holds full conversation and calendar context across sessions.</strong></p>
+        </div>
+
+        <div class="comp-failure-card">
+          <div class="comp-failure-num">Failure 02</div>
+          <div class="comp-failure-label">Suggestions only — no execution</div>
+          <div class="comp-failure-then">
+            "Find a time to meet with John" → "John is free Tuesday at 2pm or Wednesday at 10am." → User still has to open the app, text John, wait, book the meeting.
+          </div>
+          <p class="comp-failure-now">They assisted but never completed. The user still did the work. <strong>Mira executes: sends the invite, adds travel time, handles the conflict — without being prompted for each step.</strong></p>
+        </div>
+
+        <div class="comp-failure-card">
+          <div class="comp-failure-num">Failure 03</div>
+          <div class="comp-failure-label">Accuracy too low to trust</div>
+          <div class="comp-failure-then">
+            ~70–80% accuracy on multi-step tasks meant users had to supervise everything. A "hands-free" tool that requires constant checking isn't hands-free.
+          </div>
+          <p class="comp-failure-now">Supervision overhead killed the value proposition. <strong>Mira targets 95%+ transcription and 95%+ intent recognition under real-world conditions — benchmarked internally, not claimed.</strong></p>
+        </div>
+
+      </div>
+
+      <!-- Why now + market validation -->
+      <div class="comp-bottom">
+
+        <div class="comp-timing">
+          <div class="comp-timing-label">Why 2025–2026 is the inflection point</div>
+          <ul class="comp-timing-list">
+            <li><span class="tl-tech">Whisper API</span><span>Transcription accuracy crossed 95% under real-world noise — the threshold where voice starts feeling reliable, not frustrating.</span></li>
+            <li><span class="tl-tech">GPT-4 context</span><span>128K token windows make full conversation memory viable. Previous models couldn't hold enough context to act across a multi-step workflow.</span></li>
+            <li><span class="tl-tech">Latency</span><span>Response time dropped from 3–5 seconds to under 500ms. At 3+ seconds, voice interactions feel broken. Under 500ms, they feel native.</span></li>
+            <li><span class="tl-tech">API cost</span><span>10× cost reduction in 24 months made consumer-priced AI agents economically viable for the first time. The product Mira is building would have been unprofitable to run in 2022.</span></li>
+            <li><span class="tl-tech">MCP standard</span><span>Anthropic's Model Context Protocol became the universal standard for agent-tool integration in 2025 — adopted by OpenAI and Google. Mira's architecture is designed around this: agents connect to external tools through standardized interfaces, not brittle custom integrations.</span></li>
+          </ul>
+        </div>
+
+        <div class="comp-market">
+          <div class="comp-market-label">Market validation — others see it too</div>
+
+          <div class="comp-competitor">
+            <div class="comp-competitor-name">Blockit.ai</div>
+            <div class="comp-competitor-desc">Funded. Voice-first calendar management for busy professionals.</div>
+            <div class="comp-competitor-diff">Validates the market. Where Mira differs: <strong>Blockit is voice input for scheduling — a faster way to type. Mira is autonomous execution — the calendar manages itself.</strong> We're not competing on input method; we're competing on who still has to do the work afterward.</div>
+          </div>
+
+          <div class="comp-competitor">
+            <div class="comp-competitor-name">Whisper Flow</div>
+            <div class="comp-competitor-desc">Building voice-native workflow tooling for knowledge workers.</div>
+            <div class="comp-competitor-diff">Validates the timing thesis. Where Mira differs: <strong>Whisper Flow is infrastructure — an API layer others build on. Mira is the end-user product, owning the coordination relationship directly.</strong> Different layer of the stack, different moat.</div>
+          </div>
+
+          <p class="comp-market-note">Two funded teams working adjacent problems confirm this isn't a bet on future AI — <strong>it's a bet on being first to ship the right product architecture in a market that just became buildable.</strong></p>
+        </div>
+
+      </div>
+
+    </div>
+  </div><!-- /comp-section -->
+
+  <div class="section-wrap">
+
+    <!-- Section header -->
+    <div class="section-header reveal">
+      <div class="section-eyebrow">Key Product Decisions</div>
+      <h2 class="section-title">Three decisions that shaped Mira's architecture</h2>
+    </div>
+
+    <!-- Decision cards -->
+    <div class="decisions-grid reveal">
+
+      <div class="decision-card">
+        <div class="decision-number">Decision 01</div>
+        <div class="decision-title">When should Mira act vs. ask?</div>
+        <div class="decision-context">
+          The hardest design problem in agentic AI: a system that asks for confirmation on everything
+          is useless friction. A system that acts on everything is a liability. Early user research
+          showed trust broke down the moment Mira made a wrong calendar move — even once.
+        </div>
+        <div class="decision-divider"></div>
+        <div>
+          <div class="decision-chosen-label">What we built</div>
+          <div class="decision-chosen">
+            A three-tier escalation model: high-confidence actions execute silently with an
+            undo window; medium-confidence actions surface a one-tap confirmation; low-confidence
+            or irreversible actions (email sends, meeting cancellations) always require explicit approval.
+            Thresholds were calibrated against internal testing, not gut feel.
+          </div>
+        </div>
+        <div class="decision-tag">Agentic Design · Trust</div>
+      </div>
+
+      <div class="decision-card">
+        <div class="decision-number">Decision 02</div>
+        <div class="decision-title">Streaming vs. pipeline voice processing</div>
+        <div class="decision-context">
+          Two architectures, one question: how much latency is acceptable before a voice
+          interface feels broken? Streaming felt instantaneous but cost ~$15K/year at scale.
+          Pipeline processing cut that to ~$5K but added 800–1,200ms perceived delay.
+        </div>
+        <div class="decision-divider"></div>
+        <div>
+          <div class="decision-chosen-label">What we built</div>
+          <div class="decision-chosen">
+            Chose pipeline for launch — but invested the $10K savings into UX buffering:
+            an audio acknowledgment cue plays immediately on voice input, masking the processing
+            gap. User testing showed perceived latency dropped to near-zero. We preserved
+            the streaming option as a paid-tier upgrade path.
+          </div>
+        </div>
+        <div class="decision-tag">Cost · Latency · UX</div>
+      </div>
+
+      <div class="decision-card">
+        <div class="decision-number">Decision 03</div>
+        <div class="decision-title">One model or intelligent routing?</div>
+        <div class="decision-context">
+          Running every voice query through GPT-4 Sonnet was accurate but expensive —
+          and latency scaled with token complexity. Simple intents ("what's on my calendar tomorrow")
+          didn't need the same model as complex multi-step tasks ("reschedule everything after 3pm
+          and draft a conflict notice").
+        </div>
+        <div class="decision-divider"></div>
+        <div>
+          <div class="decision-chosen-label">What we built</div>
+          <div class="decision-chosen">
+            An intent classifier routes queries at ingestion: Haiku handles routine single-step
+            tasks (~60% of requests), Sonnet handles multi-step reasoning and ambiguous intent.
+            Result: 40% cost reduction per session with no measurable accuracy drop on
+            benchmarked test queries.
+          </div>
+        </div>
+        <div class="decision-tag">Model Routing · Cost Optimization</div>
+      </div>
+
+    </div>
+
+  </div><!-- /section-wrap -->
+
+  <!-- ── PIPELINE DEMO ── -->
+  <div class="pipeline-demo-section reveal">
+    <div class="demo-framing">
+      <div>
+        <div class="demo-framing-title">The architecture, <em>live.</em></div>
+        <p class="demo-framing-desc">These three decisions aren't theoretical. Type any command below and watch Mira's cognitive pipeline execute in real time — which model handles each step, what it decides, and why.</p>
+      </div>
+      <div style="font-family:var(--mono);font-size:11px;color:var(--ink-faint);line-height:1.8;">
+        <span style="color:#2a7a50">●</span> In-house model &nbsp;·&nbsp;
+        <span style="color:#3a6e8a">◆</span> GPT-4 (one step only)<br>
+        <span style="color:var(--ink-faint)">Everything else is owned.</span>
+      </div>
+    </div>
+
+    <div class="demo-inner">
+      <div class="demo-input-label">Your command</div>
+      <div class="demo-input-row">
+        <input type="text" id="demoInput" placeholder="e.g. Schedule a call with Sarah tomorrow at 2pm..." />
+        <button class="demo-run-btn" onclick="runDemo()">Run →</button>
+      </div>
+      <div class="demo-presets">
+        <button class="demo-preset" onclick="demoPreset(this)">Summarize unread emails from my manager</button>
+        <button class="demo-preset" onclick="demoPreset(this)">Schedule a call with Sarah tomorrow at 2pm</button>
+        <button class="demo-preset" onclick="demoPreset(this)">Cancel all my afternoon meetings</button>
+        <button class="demo-preset" onclick="demoPreset(this)">Reschedule everything after 3pm and send conflict notices</button>
+      </div>
+
+      <div class="demo-pipeline">
+        <div class="demo-node" id="dn-0">
+          <div class="demo-node-id">
+            <div class="demo-node-step">Step 01</div>
+            <div class="demo-node-name">Intent Classifier</div>
+            <div class="demo-node-model owned">● In-house · DistilBERT</div>
+          </div>
+          <div class="demo-node-body">
+            <div class="demo-processing"><div class="dp-dots"><span></span><span></span><span></span></div> classifying...</div>
+            <div class="demo-node-out" id="dno-0">Waiting for input</div>
+            <div class="demo-node-metrics" id="dnm-0">
+              <div><div class="dnm-val green" id="d0-conf">—</div><div class="dnm-key">Confidence</div></div>
+              <div><div class="dnm-val blue" id="d0-lat">—</div><div class="dnm-key">Latency</div></div>
+              <div><div class="dnm-val" id="d0-cost">—</div><div class="dnm-key">Cost</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="demo-node" id="dn-1">
+          <div class="demo-node-id">
+            <div class="demo-node-step">Step 02</div>
+            <div class="demo-node-name">Retrieval Planner</div>
+            <div class="demo-node-model owned">● In-house · MiniLM</div>
+          </div>
+          <div class="demo-node-body">
+            <div class="demo-processing"><div class="dp-dots"><span></span><span></span><span></span></div> planning...</div>
+            <div class="demo-node-out" id="dno-1">—</div>
+            <div class="demo-node-metrics" id="dnm-1">
+              <div><div class="dnm-val" id="d1-src">—</div><div class="dnm-key">Sources</div></div>
+              <div><div class="dnm-val blue" id="d1-lat">—</div><div class="dnm-key">Latency</div></div>
+              <div><div class="dnm-val" id="d1-cost">—</div><div class="dnm-key">Cost</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="demo-node" id="dn-2">
+          <div class="demo-node-id">
+            <div class="demo-node-step">Step 03</div>
+            <div class="demo-node-name">RAG + Memory</div>
+            <div class="demo-node-model owned">● Owned · Vector DB</div>
+          </div>
+          <div class="demo-node-body">
+            <div class="demo-processing"><div class="dp-dots"><span></span><span></span><span></span></div> retrieving...</div>
+            <div class="demo-node-out" id="dno-2">—</div>
+            <div class="demo-node-metrics" id="dnm-2">
+              <div><div class="dnm-val" id="d2-chunks">—</div><div class="dnm-key">Chunks</div></div>
+              <div><div class="dnm-val blue" id="d2-lat">—</div><div class="dnm-key">Latency</div></div>
+              <div><div class="dnm-val" id="d2-cost">—</div><div class="dnm-key">Cost</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="demo-node" id="dn-3">
+          <div class="demo-node-id">
+            <div class="demo-node-step">Step 04</div>
+            <div class="demo-node-name">Model Router</div>
+            <div class="demo-node-model owned">● In-house · Classifier</div>
+          </div>
+          <div class="demo-node-body">
+            <div class="demo-processing"><div class="dp-dots"><span></span><span></span><span></span></div> routing...</div>
+            <div class="demo-node-out" id="dno-3">—</div>
+            <div class="demo-node-metrics" id="dnm-3">
+              <div><div class="dnm-val" id="d3-model">—</div><div class="dnm-key">Model</div></div>
+              <div><div class="dnm-val" id="d3-reason">—</div><div class="dnm-key">Reason</div></div>
+              <div><div class="dnm-val green" id="d3-saving">—</div><div class="dnm-key">Saving</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="demo-node" id="dn-4">
+          <div class="demo-node-id">
+            <div class="demo-node-step">Step 05</div>
+            <div class="demo-node-name">Confidence Gate</div>
+            <div class="demo-node-model owned">● In-house · Threshold</div>
+          </div>
+          <div class="demo-node-body">
+            <div class="demo-processing"><div class="dp-dots"><span></span><span></span><span></span></div> evaluating...</div>
+            <div class="demo-node-out" id="dno-4">—</div>
+            <div class="demo-node-metrics" id="dnm-4">
+              <div><div class="dnm-val" id="d4-score">—</div><div class="dnm-key">Score</div></div>
+              <div><div class="dnm-val" id="d4-tier">—</div><div class="dnm-key">Tier</div></div>
+              <div><div class="dnm-val" id="d4-dec">—</div><div class="dnm-key">Decision</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="demo-node" id="dn-5">
+          <div class="demo-node-id">
+            <div class="demo-node-step">Step 06</div>
+            <div class="demo-node-name">Response Generator</div>
+            <div class="demo-node-model openai">◆ OpenAI · GPT-4</div>
+          </div>
+          <div class="demo-node-body">
+            <div class="demo-processing"><div class="dp-dots"><span></span><span></span><span></span></div> generating...</div>
+            <div class="demo-node-out" id="dno-5">—</div>
+            <div class="demo-node-metrics" id="dnm-5">
+              <div><div class="dnm-val blue" id="d5-tok">—</div><div class="dnm-key">Tokens</div></div>
+              <div><div class="dnm-val blue" id="d5-lat">—</div><div class="dnm-key">Latency</div></div>
+              <div><div class="dnm-val" id="d5-cost">—</div><div class="dnm-key">Cost</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="demo-verdict" id="demoVerdict">
+        <div class="dv-icon" id="dv-icon">✓</div>
+        <div>
+          <div class="dv-label">Mira's decision</div>
+          <div class="dv-action" id="dv-action">—</div>
+          <div class="dv-reason" id="dv-reason">—</div>
+        </div>
+        <div class="dv-cost">
+          <div class="dv-cost-val" id="dv-cost">—</div>
+          <div class="dv-cost-key">Total cost / query</div>
+        </div>
+      </div>
+      <button class="demo-reset" id="demoReset" onclick="resetDemo()">↺ Run another command</button>
+    </div>
+  </div>
+
+  <!-- ── MOBILE DESIGN ── -->
+  <div class="section-wrap">
+    <div class="section-header reveal">
+      <div class="section-eyebrow">Product Design</div>
+      <h2 class="section-title">Designed for trust at every interaction</h2>
+    </div>
+
+    <div class="mobile-screens reveal">
+
+      <!-- Phone 1: Signup / Onboarding flow — LIVE FIGMA -->
+      <div class="phone-frame">
+        <div class="phone-shell">
+          <iframe
+            class="phone-figma-frame"
+            src="https://embed.figma.com/proto/fuowBtuW2pDQ34UVMKzQyR/Mira-MVP1?node-id=127-2708&scaling=scale-down&content-scaling=fixed&page-id=0%3A1&starting-point-node-id=127%3A2708&embed-host=share&hide-ui=1"
+            allowfullscreen>
+          </iframe>
+        </div>
+        <div class="phone-caption">
+          <div class="phone-caption-title">Onboarding Flow</div>
+          <div class="phone-caption-desc">First-run trust setup — permissions, calendar connections, and voice calibration</div>
+          <div class="figma-live-badge"><div class="figma-live-dot"></div>Live prototype · click to interact</div>
+        </div>
+      </div>
+
+      <!-- Phone 2: Calendar conflict resolution — LIVE FIGMA -->
+      <div class="phone-frame">
+        <div class="phone-shell">
+          <iframe
+            class="phone-figma-frame"
+            src="https://embed.figma.com/proto/fuowBtuW2pDQ34UVMKzQyR/Mira-MVP1?node-id=670-7269&scaling=scale-down&content-scaling=fixed&page-id=0%3A1&starting-point-node-id=127%3A2708&embed-host=share&hide-ui=1"
+            allowfullscreen>
+          </iframe>
+        </div>
+        <div class="phone-caption">
+          <div class="phone-caption-title">Conflict Resolution</div>
+          <div class="phone-caption-desc">Mira surfaces a conflict, presents options, and waits for explicit approval before acting</div>
+          <div class="figma-live-badge"><div class="figma-live-dot"></div>Live prototype · click to interact</div>
+        </div>
+      </div>
+
+      <!-- Phone 3: Dashboard / Manual control flow — LIVE FIGMA -->
+      <div class="phone-frame">
+        <div class="phone-shell">
+          <iframe
+            class="phone-figma-frame"
+            src="https://embed.figma.com/proto/fuowBtuW2pDQ34UVMKzQyR/Mira-MVP1?node-id=604-13627&scaling=scale-down&content-scaling=fixed&page-id=0%3A1&starting-point-node-id=127%3A2708&embed-host=share&hide-ui=1"
+            allowfullscreen>
+          </iframe>
+        </div>
+        <div class="phone-caption">
+          <div class="phone-caption-title">Manual Dashboard</div>
+          <div class="phone-caption-desc">When users want full control — hands-on view for browsing, managing, and overriding Mira's decisions</div>
+          <div class="figma-live-badge"><div class="figma-live-dot"></div>Live prototype · click to interact</div>
+        </div>
+      </div>
+
+    </div>
+
+  </div><!-- /section-wrap -->
+
+  <!-- ── GTM & GROWTH ── -->
+  <div class="gtm-section reveal" id="gtm">
+    <div class="gtm-wrap">
+
+      <div class="gtm-header">
+        <div>
+          <div class="gtm-eyebrow">Go-to-Market &amp; Growth</div>
+          <h2 class="gtm-title">The product was built.<br>Then came the <em>harder</em> part.</h2>
+        </div>
+        <p class="gtm-header-desc">
+          Most AI PM portfolios stop at the architecture. Here's how I thought about getting Mira to the right users —
+          <strong>who to talk to first, what to charge, and what we got wrong</strong> about where signups would actually come from.
+        </p>
+      </div>
+
+      <div class="gtm-grid">
+
+        <!-- CARD 1: USER INSIGHT -->
+        <div class="gtm-card">
+          <div class="gtm-card-num">01 — User Insight</div>
+          <div class="gtm-card-title">Two personas validated. One drove the roadmap.</div>
+
+          <div class="gtm-insight">
+            <div class="gtm-insight-label">The finding</div>
+            <div class="gtm-insight-text">
+              Realtors and working parents both validated the core problem — too many calendar conflicts, too many unread threads.
+              But <strong>realtors gave us feedback 10× faster.</strong> Their stakes are externally legible: every missed showing
+              is a lost commission, visible and verifiable. Working parents' pain was real but harder to surface in a 30-minute interview.
+            </div>
+          </div>
+
+          <div class="gtm-insight">
+            <div class="gtm-insight-label">What it changed</div>
+            <div class="gtm-insight-text">
+              Working parents shaped onboarding — they need to <strong>trust the system before they'll grant calendar access.</strong>
+              The permission-sequencing flow exists because of them. But realtors compressed our sprint cycles.
+              We shipped faster because we chose the right validation partner for iteration, not just the right audience for launch.
+            </div>
+          </div>
+
+          <p class="gtm-body">The insight: validation speed is its own variable when you're 0→1 with a small team. Both groups remain primary personas — they just served different roles in the build process.</p>
+        </div>
+
+        <!-- CARD 2: PRICING LOGIC -->
+        <div class="gtm-card">
+          <div class="gtm-card-num">02 — Pricing Logic</div>
+          <div class="gtm-card-title">Three models rejected. Each for a different reason.</div>
+
+          <div class="gtm-rejected-label">Considered &amp; rejected</div>
+
+          <div class="rejected-row">
+            <span class="rejected-x">✕</span>
+            <div>
+              <div class="rejected-model">Paid-only from day one</div>
+              <div class="rejected-reason">Mira requests calendar and email access on signup. Charging before the user has experienced value creates a trust deficit the product can't recover from. The assistant has to earn the right to ask for payment — in that order.</div>
+            </div>
+          </div>
+
+          <div class="rejected-row">
+            <span class="rejected-x">✕</span>
+            <div>
+              <div class="rejected-model">B2B / team pricing</div>
+              <div class="rejected-reason">Every AI productivity tool is going B2B right now. We saw clear whitespace in the individual-first market. Teams also introduce compliance and admin complexity that would slow iteration velocity at this stage.</div>
+            </div>
+          </div>
+
+          <div class="rejected-row">
+            <span class="rejected-x">✕</span>
+            <div>
+              <div class="rejected-model">Per-task / consumption pricing</div>
+              <div class="rejected-reason">Creates the wrong behavioral loop. Users start rationing requests to manage cost — which is the opposite of the daily-habit formation Mira needs to survive as a subscription product.</div>
+            </div>
+          </div>
+
+          <div class="gtm-insight" style="margin-top:20px;">
+            <div class="gtm-insight-label">What we chose &amp; why</div>
+            <div class="gtm-insight-text">
+              <strong>1-month free trial → $14.99/$24.99 flat-rate.</strong> The trial removes the access barrier.
+              Flat-rate eliminates usage anxiety. The upgrade trigger is the conflict resolution flow —
+              the moment users see Mira act autonomously on a real scheduling problem is when they convert.
+            </div>
+          </div>
+        </div>
+
+        <!-- CARD 3: ACQUISITION -->
+        <div class="gtm-card">
+          <div class="gtm-card-num">03 — Acquisition</div>
+          <div class="gtm-card-title">200+ waitlist. The channel that converted surprised us.</div>
+
+          <div class="gtm-insight">
+            <div class="gtm-insight-label">Expected vs. actual</div>
+            <div class="gtm-insight-text">
+              LinkedIn content and AIPM Accelerator network generated awareness. But
+              <strong>cold outreach to realtor associations and parent community groups converted at a
+              higher rate than any other channel</strong> — including warm referrals from beta users.
+              We expected warm channels to win. They didn't.
+            </div>
+          </div>
+
+          <div class="acq-channels">
+            <div class="acq-row">
+              <span class="acq-label">Cold outreach</span>
+              <div class="acq-bar-track"><div class="acq-bar-fill" data-width="72"></div></div>
+              <span class="acq-pct">High</span>
+            </div>
+            <div class="acq-row">
+              <span class="acq-label">Word of mouth</span>
+              <div class="acq-bar-track"><div class="acq-bar-fill" data-width="50"></div></div>
+              <span class="acq-pct">Mid</span>
+            </div>
+            <div class="acq-row">
+              <span class="acq-label">LinkedIn content</span>
+              <div class="acq-bar-track"><div class="acq-bar-fill" data-width="36"></div></div>
+              <span class="acq-pct">Mid</span>
+            </div>
+            <div class="acq-row">
+              <span class="acq-label">AIPM network</span>
+              <div class="acq-bar-track"><div class="acq-bar-fill" data-width="20"></div></div>
+              <span class="acq-pct">Low</span>
+            </div>
+          </div>
+
+          <div class="acq-surprise">
+            <div class="acq-surprise-label">The insight</div>
+            <div class="acq-surprise-text">
+              People in high-accountability roles — realtors who lose commissions on missed showings, parents who double-book school pickups —
+              have <strong>acute, externally visible pain.</strong> They convert because Mira solves something
+              costly and embarrassing, not just inconvenient. That's a different category of motivation.
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /gtm-grid -->
+    </div><!-- /gtm-wrap -->
+  </div><!-- /gtm-section -->
+
+  <!-- ── OUTCOMES ── -->
+  <div class="section-wrap">
+    <!-- Outcome strip -->
+    <div class="outcome-strip reveal" style="margin-top:64px;">
+      <div class="outcome-stat">
+        <div class="outcome-number">70<span>%</span></div>
+        <div class="outcome-label">Weekly active usage in closed beta — higher than most consumer apps ever achieve</div>
+      </div>
+      <div class="outcome-divider-v"></div>
+      <div class="outcome-stat">
+        <div class="outcome-number">#<span>1</span></div>
+        <div class="outcome-label">Ranked among 20+ products in Dr. Nancy Li's AIPM Accelerator. Outstanding Product Leader award.</div>
+      </div>
+      <div class="outcome-divider-v"></div>
+      <div class="outcome-stat">
+        <div class="outcome-number">6<span>mo</span></div>
+        <div class="outcome-label">Zero to working beta — full agentic architecture, three API integrations, freemium pricing model</div>
+      </div>
+    </div>
+
+    <!-- Honest framing -->
+    <div class="honest-box reveal">
+      <div class="honest-label">Honest framing for skeptical reviewers</div>
+      <p class="honest-text">
+        Mira is in closed beta with 25 users and a 100+ waitlist ahead of March 2026 public launch.
+        <strong>I'm not claiming product-market fit.</strong> What I'm demonstrating is that I can
+        go from zero to a production-grade agentic architecture — with real design decisions,
+        real cost trade-offs, and real user data — in six months, without external funding.
+        That's the signal: <strong>execution velocity at founder speed, with enterprise discipline.</strong>
+      </p>
+    </div>
+
+    <!-- What I learned -->
+    <div class="learning-box reveal">
+      <div class="learning-label">What I'm still learning</div>
+      <p class="learning-text">
+        The biggest thing I got wrong about 0→1: <strong>I thought growth strategy was a launch problem.</strong>
+        It's not. CAC, channel mix, funnel optimization — those are scaling tools. They require budget,
+        volume, and a product someone already needs badly enough to pay for. Before that exists,
+        none of it applies. LinkedIn posts don't tell you if your product solves a real problem.
+        Reddit upvotes don't either. <strong>The only thing that actually works at zero is finding
+        one person who has the pain, sitting with them long enough to understand exactly why it hurts,
+        then finding the next one.</strong> It doesn't scale. That's the point — it's not supposed to yet.
+        I came in thinking about channels. I should have been thinking about conversations.
+        I'm still learning what it means to grow something from nothing, one person at a time.
+      </p>
+    </div>
+  </div>
+
+</section>
+
+<!-- ── ENTERPRISE EXPERIENCE ── -->
+<section class="enterprise-section" id="enterprise">
+  <div class="enterprise-wrap">
+
+    <!-- Section opener -->
+    <div class="ent-opener reveal">
+      <div>
+        <div class="ent-eyebrow">Enterprise Leadership</div>
+        <h2 class="ent-opener-title">The PM brought in<br>when failure <em>wasn't</em><br>an option.</h2>
+      </div>
+      <div>
+        <p class="ent-opener-body">
+          Mira demonstrates what I can build. What follows demonstrates what I've been trusted to protect.
+          Across FDA-regulated biotech, PSD2-compliant fintech, and global manufacturing,
+          <strong>I've operated in environments where a wrong decision had a quantifiable daily cost</strong> —
+          and where the job wasn't just to execute a plan, but to make the right call when the plan was wrong,
+          build trust across organizations that didn't want to change, and move faster than
+          anyone thought was possible under the constraints.
+        </p>
+        <div class="ent-traits">
+          <span class="ent-trait">Executive influence</span>
+          <span class="ent-trait">Crisis recovery</span>
+          <span class="ent-trait">Regulatory compliance</span>
+          <span class="ent-trait">Leading up</span>
+          <span class="ent-trait">Velocity at scale</span>
+          <span class="ent-trait">Cross-org trust</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- GENENTECH — Lead card -->
+    <div class="ent-genentech reveal">
+
+      <div class="ent-company-eyebrow">Genentech (Roche) · San Francisco · 2023–2025 · Sr. PM, Supply Chain Platform</div>
+
+      <div class="ent-genentech-grid">
+
+        <div class="ent-genentech-left">
+          <h3 class="ent-headline">History was repeating.<br>I called it out loud.<br><em>And staked my reputation on it.</em></h3>
+          <p class="ent-body">
+            Brought into a $500M+ global SAP S/4HANA + EWM program already in crisis —
+            every other region had missed their go-live. I challenged the failing program process
+            directly at the executive level, redesigned the delivery approach, and secured
+            cross-business-unit buy-in. <strong>North America became the only on-time go-live
+            in the entire global program</strong> — enabled by replacing siloed UAT with a
+            Day-in-the-Life testing framework that put real warehouse workers through
+            real workflows before launch.
+          </p>
+          <p class="ent-body">
+            After go-live, a separate and urgent initiative: the operational supply chain
+            platform had compliance failures and delays costing up to <strong>$10M per day.</strong>
+            That became a VoC-driven product problem — and an AI opportunity.
+          </p>
+
+          <!-- Stats: one per story -->
+          <div class="ent-pressure-row">
+            <div class="ent-pressure-stat">
+              <div class="ent-pressure-num">60<span>%</span></div>
+              <div class="ent-pressure-label">Defect reduction from DIL framework · adopted across 5 sites · 15 teams · company standard</div>
+            </div>
+            <div class="ent-pressure-stat">
+              <div class="ent-pressure-num">$10<span>M</span></div>
+              <div class="ent-pressure-label">Per day operational exposure · post-launch DSCSA compliance initiative</div>
+            </div>
+            <div class="ent-pressure-stat">
+              <div class="ent-pressure-num">100<span>%</span></div>
+              <div class="ent-pressure-label">DSCSA federal compliance achieved · 8 weeks · zero exceptions</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="ent-genentech-right">
+
+          <div class="ent-decision-block">
+            <div class="ent-decision-label">Initiative 1 — Go-live: Challenging authority, staking my reputation</div>
+            <div class="ent-decision-text">
+              Midway through the North American launch, I saw the pattern: the same process failures
+              that had caused every other region to miss go-live were repeating themselves.
+              I built the case, presented it to program leaders who had ownership and authority,
+              and proposed a full replacement process — documented in process diagrams, not just
+              a verbal recommendation. <strong>That's a significant risk for a contractor
+              in a room full of senior leaders committed to a different approach.</strong>
+              They accepted it. North America became the <strong>only on-time go-live
+              in the entire $500M global program.</strong> I then designed the new process
+              to be replicable — structured documentation other regions could follow
+              without me in the room. The Day-in-the-Life testing framework that emerged
+              was adopted across 5 US sites, 15 teams, and ratified as the company-wide standard.
+              <strong>Post-launch defects dropped 60%.</strong>
+            </div>
+          </div>
+
+          <div class="ent-decision-block">
+            <div class="ent-decision-label">Initiative 2 — Post-launch: VoC → compliance → AI infrastructure</div>
+            <div class="ent-decision-text">
+              With $10M/day on the line from supply chain failures and DSCSA non-compliance,
+              I ran structured Voice of Customer workshops with warehouse end users —
+              the people whose daily workflows were producing the failures. Their input
+              surfaced the exact friction points. But the deeper finding was structural:
+              <strong>the data capture architecture was too fragmented for AI to ever be applied.</strong>
+              The fix resolved compliance immediately — and deliberately rebuilt the
+              data foundation that AI features would require later.
+            </div>
+          </div>
+
+          <div class="ent-decision-block">
+            <div class="ent-decision-label">The AI roadmap that followed</div>
+            <div class="ent-decision-text">
+              With the infrastructure rebuilt, AI features became formally sequenced deliverables —
+              not aspirational items. The lead roadmap item:
+              <strong>ML-driven warehouse path optimization</strong> — a model that learns
+              optimal picking routes from observed human behavior, then progressively automates
+              as confidence accumulates. The compliance fix took 8 weeks.
+              The AI roadmap made that investment a 25-year asset.
+            </div>
+          </div>
+
+          <div class="ent-skill-tags">
+            <span class="ent-skill-tag">Voice of Customer</span>
+            <span class="ent-skill-tag">Process design</span>
+            <span class="ent-skill-tag">AI-ready product design</span>
+            <span class="ent-skill-tag">ML roadmapping</span>
+            <span class="ent-skill-tag">Executive negotiation</span>
+            <span class="ent-skill-tag">Day-in-the-Life testing</span>
+            <span class="ent-skill-tag">FDA / GxP · DSCSA</span>
+            <span class="ent-skill-tag">SAP S/4HANA</span>
+          </div>
+
+        </div>
+      </div>
+    </div><!-- /genentech -->
+
+    <!-- LUMENTUM + SVB — side by side -->
+    <div class="ent-two-col reveal">
+
+      <!-- LUMENTUM -->
+      <div class="ent-card">
+        <div class="ent-card-eyebrow">Lumentum · San Jose · 2020–2023 · Product Lead</div>
+        <h3 class="ent-card-headline">A 2-year stalled program.<br>Delivered in <em>4 months.</em><br>9 sites. 82% adoption in 30 days.</h3>
+
+        <span class="ent-card-metric">$30M+ cost savings · CEO Alan Lowe Award</span>
+        <a href="ceo-award-letter.pdf" target="_blank" style="display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:var(--accent);text-decoration:none;border:1px solid rgba(200,75,47,0.25);padding:6px 12px;margin-top:12px;transition:background 0.2s;">
+          ↗ View CEO Award Letter
+        </a>
+
+        <p class="ent-card-body">
+          The Manufacturing System Replacement Program had been running for two years with nothing to show.
+          Classic big-bang thinking — trying to deliver everything at once across 9 global semiconductor sites.
+          <strong>I reset it with an MVP strategy</strong>, defined phased deliverables (MVP0–MVP3),
+          ran in-person user research with factory workers to understand the real automation opportunities,
+          and drove go-live across all 9 sites in 4 months. Zero production incidents.
+          82% adoption in the first 30 days — driven by structured UAT, early-adopter training,
+          and post-launch command stations at every site.
+        </p>
+
+        <div class="ent-card-decision">
+          <div class="ent-card-decision-label">Building now. Enabling AI next.</div>
+          <div class="ent-card-decision-text">
+            The SECS/GEM equipment automation work was two things simultaneously:
+            an immediate operational win — 80% reduction in equipment downtime — and
+            <strong>deliberate AI infrastructure.</strong> By connecting fabrication machines
+            to MES for real-time data capture, we built the pipeline that ML models
+            would need later. The strategic intent was explicit: capture machine behavior
+            at scale now, so we could build AI features — predictive maintenance,
+            anomaly detection, yield optimization — on top of learned patterns.
+            <strong>You can't train a model on data that was never captured.
+            The roadmap started with instrumentation.</strong>
+          </div>
+        </div>
+
+        <div class="ent-card-decision">
+          <div class="ent-card-decision-label">The leadership skill</div>
+          <div class="ent-card-decision-text">
+            Managed a $20M program budget across 4 years. Led teams across 9 international sites
+            with different languages, time zones, and operational cultures.
+            <strong>Got them all to go-live on the same date</strong> — through clear RACI structures,
+            escalation frameworks, and weekly cross-site alignment that didn't let local issues
+            become global blockers.
+          </div>
+        </div>
+      </div>
+
+      <!-- SVB -->
+      <div class="ent-card">
+        <div class="ent-card-eyebrow">Silicon Valley Bank · SF · 2017–2019 · Sr. PM, Core Banking & APIs</div>
+        <h3 class="ent-card-headline">$20M in fines avoided.<br>Delivered 6 months early.<br><em>By saying no to the COO.</em></h3>
+
+        <span class="ent-card-metric">PSD2 compliance · 35% partner API adoption growth</span>
+
+        <p class="ent-card-body">
+          The COO had set an aggressive PSD2 compliance roadmap. It was achievable on paper —
+          and would have failed in reality. I pushed back. Not with objections, but with
+          <strong>a structured mitigation strategy</strong> that showed exactly where the timeline
+          would break, what the downstream risk was, and what a safer path looked like.
+          The COO accepted the revised plan. We delivered 6 months ahead of the original deadline,
+          avoided $20M+ in regulatory penalties, and SVB was listed as a Fintech leader at the time.
+        </p>
+
+        <div class="ent-card-decision">
+          <div class="ent-card-decision-label">The leadership skill</div>
+          <div class="ent-card-decision-text">
+            <strong>Leading up means being willing to tell a COO their plan is wrong —
+            with enough data and credibility that they thank you for it.</strong>
+            Most PMs execute what leadership decides. The ones who earn trust
+            are the ones who change the decision before it becomes a crisis.
+          </div>
+        </div>
+
+        <div class="ent-card-decision">
+          <div class="ent-card-decision-label">The platform signal</div>
+          <div class="ent-card-decision-text">
+            Built a regulatory traceability playbook mapping every PSD2 requirement to specific
+            engineering tasks — compliance verification at the feature level.
+            <strong>Defined API versioning and deprecation strategy for 40+ partner integrations</strong>
+            that became the standard for all SVB external APIs.
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /two-col -->
+
+    <!-- ServiceNow mini-card -->
+    <div class="reveal" style="margin-top:1px; background:var(--paper-dark); border:1px solid var(--rule); padding:32px 40px; display:grid; grid-template-columns:1fr 1fr; gap:48px; align-items:start;">
+      <div>
+        <div style="font-family:var(--mono);font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:12px;">ServiceNow · Santa Clara · 2019–2020 · Management Consultant</div>
+        <div style="font-family:var(--serif);font-size:18px;font-weight:700;letter-spacing:-0.02em;line-height:1.25;color:var(--ink);margin-bottom:12px;">SACM program recovery.<br>CIO Award runner-up.</div>
+        <p style="font-size:13px;line-height:1.75;color:var(--ink-muted);font-weight:300;">
+          Took over an at-risk SACM program and pivoted to MVP delivery — launching a live asset and
+          configuration dashboard tracking <strong>10,000+ service assets</strong> globally while
+          preserving full scope for subsequent phases. Team recognized as CIO Award runner-up for delivery approach.
+        </p>
+      </div>
+      <div>
+        <div style="border-left:2px solid var(--rule);padding:12px 16px;background:var(--paper);">
+          <div style="font-family:var(--mono);font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:6px;">The PM signal</div>
+          <p style="font-size:13px;line-height:1.65;color:var(--ink-muted);font-weight:300;">
+            An at-risk program with no clear path to delivery. <strong>MVP thinking applied to enterprise ITSM:</strong>
+            stop trying to deliver everything, identify the highest-value deliverable, ship it,
+            then use the credibility to unlock the rest. Same pattern used at Lumentum.
+            Same pattern used at Genentech. Consistent playbook across different industries and stakes.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Closing trust statement -->
+    <div class="ent-closing reveal">
+      <div class="ent-closing-mark">"</div>
+      <p class="ent-closing-text">
+        Across every one of these programs, the common thread wasn't the methodology or the technology.
+        It was being <strong>the person the organization could rely on when the cost of failure was real</strong> —
+        and having the judgment to make the right call even when it was the uncomfortable one.
+        That's the standard I bring to every product I build.
+      </p>
+    </div>
+
+  </div>
+</section>
+
+<!-- ── LAB ── -->
+<section class="lab-section" id="lab">
+  <div class="lab-wrap">
+
+    <!-- Header -->
+    <div class="lab-header reveal">
+      <div>
+        <div class="lab-eyebrow">Side Projects · Always Building</div>
+        <h2 class="lab-title">What I build<br>when I'm not<br>building <em>Mira.</em></h2>
+      </div>
+      <p class="lab-header-body">
+        These aren't portfolio filler. They're how I stay sharp —
+        testing new models, exploring different problem spaces,
+        and making product decisions under real constraints with zero safety net.
+        <strong>Every project here started with a specific problem I noticed,
+        a PM decision that mattered, and a working product at the end.</strong>
+        The pattern is deliberate: ship something real, learn something specific, move on.
+      </p>
+    </div>
+
+    <!-- Project cards -->
+    <div class="lab-grid reveal">
+
+      <!-- IMBRANDING -->
+      <div class="lab-card">
+        <div class="lab-card-eyebrow">Live Product · Freemium · 2026</div>
+        <div class="lab-card-name">ImBranding</div>
+        <div class="lab-card-tagline">AI-powered brand voice & social content agent</div>
+
+        <div class="lab-card-problem">
+          <div class="lab-card-problem-label">The problem</div>
+          <div class="lab-card-problem-text">
+            Brand voice breaks down the moment AI enters the content workflow.
+            Every model has a different register — Claude writes differently than Grok,
+            Grok differently than GPT. Teams end up with content that's technically correct
+            but tonally inconsistent. The brand sounds like three different people wrote it.
+          </div>
+        </div>
+
+        <div class="lab-card-decision">
+          <div class="lab-card-decision-label">The PM decision that mattered</div>
+          <div class="lab-card-decision-text">
+            Instead of picking one model and optimizing for it, I built a
+            <strong>multi-model routing architecture</strong> — Claude for long-form voice
+            and nuance, Grok for real-time trend awareness and punchy social copy.
+            The product decides which model handles which task based on content type,
+            not user preference. <strong>Brand consistency comes from the routing logic,
+            not from locking users into a single model.</strong>
+          </div>
+        </div>
+
+        <div class="lab-card-footer">
+          <div class="lab-card-stack">
+            <span class="lab-stack-tag">Claude</span>
+            <span class="lab-stack-tag">Grok</span>
+            <span class="lab-stack-tag">Multi-model routing</span>
+            <span class="lab-stack-tag">Freemium</span>
+          </div>
+          <a href="https://kinhai-collab.github.io/imbranding" target="_blank" class="lab-card-link">View live →</a>
+        </div>
+      </div>
+
+      <!-- BYTESIZE -->
+      <div class="lab-card">
+        <div class="lab-card-eyebrow">Live Product · 2026</div>
+        <div class="lab-card-name">ByteSize</div>
+        <div class="lab-card-tagline">AI-powered YouTube summarization with audio narration</div>
+
+        <div class="lab-card-problem">
+          <div class="lab-card-problem-label">The problem</div>
+          <div class="lab-card-problem-text">
+            Hours of YouTube content, no time to watch it. Existing summarizers
+            give you a wall of text you still have to read at a desk.
+            The consumption problem isn't solved — it's just moved from video to text.
+            The user is still sitting down, still staring at a screen.
+          </div>
+        </div>
+
+        <div class="lab-card-decision">
+          <div class="lab-card-decision-label">The PM decision that mattered</div>
+          <div class="lab-card-decision-text">
+            The insight was about <strong>consumption modality, not output format.</strong>
+            A text summary doesn't help someone who's driving, cooking, or commuting.
+            Adding audio narration — turning the summary into something you can listen to —
+            moves the product from "faster reading" to "genuinely hands-free."
+            <strong>Same information, different access model. That's a different product.</strong>
+          </div>
+        </div>
+
+        <div class="lab-card-footer">
+          <div class="lab-card-stack">
+            <span class="lab-stack-tag">Claude</span>
+            <span class="lab-stack-tag">TypeScript</span>
+            <span class="lab-stack-tag">Audio narration</span>
+            <span class="lab-stack-tag">STT / TTS</span>
+          </div>
+          <a href="https://kinhai-collab.github.io/bytesize-landing" target="_blank" class="lab-card-link">View live →</a>
+        </div>
+      </div>
+
+    </div><!-- /lab-grid -->
+
+    <!-- Closing note -->
+    <div class="lab-note reveal">
+      <p class="lab-note-text">
+        Both products are live, publicly accessible, and have real users.
+        <strong>Neither started with a marketing budget or a growth strategy — because that's not the point yet.</strong>
+        The question I ask for every lab project is the same one I ask for Mira:
+        what's the specific human problem, what's the product decision that makes it better,
+        and does the thing I built actually work? If the answer to all three is yes, it ships.
+      </p>
+    </div>
+
+  </div>
+</section>
+
+<script>
+  // ── Scroll reveal ──
+  const reveals = document.querySelectorAll('.reveal');
+  const revealObs = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); revealObs.unobserve(e.target); } });
+  }, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
+  reveals.forEach(el => revealObs.observe(el));
+
+  // ── Pipeline demo ──
+  const dScenarios = {
+    simple: {
+      match: (s) => !s.includes('cancel') && !s.includes('reschedule') && !s.includes('schedule') && !s.includes('call') && !s.includes('meeting'),
+      steps: [
+        { out: 'Intent: email_summarize · Single-step · Low complexity', conf:'94%', lat:'18ms', cost:'$0.000' },
+        { out: 'Query: [inbox, sender=manager, unread=true]', src:'Inbox only', lat:'12ms', cost:'$0.000' },
+        { out: '7 unread emails found · Sender context loaded', chunks:'7 emails', lat:'34ms', cost:'$0.000' },
+        { out: '→ Haiku selected (single-step structured output)', model:'Haiku', modelClass:'green', reason:'Low complexity', saving:'~40%' },
+        { out: 'Score: 0.96 · Tier 1 · Silent execution — read-only, high confidence', score:'0.96', scoreClass:'green', tier:'Tier 1', dec:'Act', decClass:'green' },
+        { out: 'Summarized 7 emails · 2 action items · 1 urgent flag', tok:'420', lat:'580ms', cost:'$0.0008' }
+      ],
+      verdict: { icon:'✓', action:'Executed silently — summary delivered.', reason:'High confidence, single data source, read-only. No confirmation needed.', cost:'$0.0009' },
+      escalate: false
+    },
+    medium: {
+      match: (s) => s.includes('schedule') || s.includes('call') || (s.includes('meeting') && !s.includes('cancel')),
+      steps: [
+        { out: 'Intent: calendar_create · Single-step · External participant', conf:'91%', lat:'21ms', cost:'$0.000' },
+        { out: 'Query: [contacts=Sarah, calendar=all, date=tomorrow] · Conflict check', src:'3 calendars + contacts', lat:'18ms', cost:'$0.000' },
+        { out: 'Sarah Chen found · 2pm clear · No conflicts detected', chunks:'4 contexts', lat:'41ms', cost:'$0.000' },
+        { out: '→ Haiku selected (structured write, single-step)', model:'Haiku', modelClass:'green', reason:'Structured write', saving:'~40%' },
+        { out: 'Score: 0.88 · Tier 2 · Confirmation surfaced — external invite', score:'0.88', scoreClass:'amber', tier:'Tier 2', dec:'Ask', decClass:'amber' },
+        { out: 'Draft created · One-tap confirmation card surfaced to user', tok:'180', lat:'420ms', cost:'$0.0004' }
+      ],
+      verdict: { icon:'⟳', action:'Awaiting your confirmation.', reason:'External calendar invite. Score 0.88 — below silent threshold. One tap to confirm.', cost:'$0.0005' },
+      escalate: true
+    },
+    complex: {
+      match: () => true,
+      steps: [
+        { out: 'Intent: calendar_bulk_modify · Multi-step · Irreversible · External notifications', conf:'97%', lat:'19ms', cost:'$0.000' },
+        { out: 'Query: [calendar=all, time>15:00, today] + [all attendees]', src:'3 calendars + contacts', lat:'22ms', cost:'$0.000' },
+        { out: '4 meetings found · 11 external attendees · 2 recurring events', chunks:'12 contexts', lat:'58ms', cost:'$0.000' },
+        { out: '→ Sonnet selected (multi-step reasoning + conflict drafting)', model:'Sonnet', modelClass:'amber', reason:'Multi-step + drafting', saving:'0%' },
+        { out: 'Score: 0.97 · Tier 3 · Full review required — irreversible, 11 affected', score:'0.97', scoreClass:'green', tier:'Tier 3', dec:'Full Review', decClass:'amber' },
+        { out: 'Action plan drafted · 4 cancellations + 11 notices previewed for approval', tok:'1,240', lat:'1,820ms', cost:'$0.0031' }
+      ],
+      verdict: { icon:'⚠', action:'Review required before Mira acts.', reason:'Irreversible action affecting 11 external attendees. Even at 97% confidence, Tier 3 always requires explicit approval.', cost:'$0.0032' },
+      escalate: true
+    }
+  };
+
+  function getScenario(input) {
+    const s = input.toLowerCase();
+    if (dScenarios.simple.match(s)) return dScenarios.simple;
+    if (dScenarios.medium.match(s)) return dScenarios.medium;
+    return dScenarios.complex;
+  }
+
+  function demoPreset(btn) { document.getElementById('demoInput').value = btn.textContent; }
+
+  let demoRunning = false;
+
+  function resetDemo() {
+    demoRunning = false;
+    for (let i = 0; i < 6; i++) {
+      document.getElementById(`dn-${i}`).className = 'demo-node';
+      const out = document.getElementById(`dno-${i}`);
+      out.textContent = i === 0 ? 'Waiting for input' : '—';
+      out.className = 'demo-node-out';
+      document.querySelector(`#dn-${i} .demo-processing`).classList.remove('show');
+      document.getElementById(`dnm-${i}`).classList.remove('show');
+    }
+    document.getElementById('demoVerdict').classList.remove('show');
+    document.getElementById('demoReset').classList.remove('show');
+    document.getElementById('demoInput').value = '';
+  }
+
+  async function runDemo() {
+    if (demoRunning) return;
+    const input = document.getElementById('demoInput').value.trim();
+    if (!input) return;
+    demoRunning = true;
+    const sc = getScenario(input);
+    for (let i = 0; i < 6; i++) document.getElementById(`dn-${i}`).className = 'demo-node';
+    document.getElementById('demoVerdict').classList.remove('show');
+    document.getElementById('demoReset').classList.remove('show');
+
+    const delays = [0, 550, 1050, 1500, 2000, 2550];
+    const durations = [480, 380, 420, 380, 420, 580];
+
+    for (let i = 0; i < 6; i++) {
+      await sleep(delays[i]);
+      const node = document.getElementById(`dn-${i}`);
+      const proc = node.querySelector('.demo-processing');
+      const out = document.getElementById(`dno-${i}`);
+      const metrics = document.getElementById(`dnm-${i}`);
+      node.classList.add('active');
+      proc.classList.add('show');
+      await sleep(durations[i]);
+      proc.classList.remove('show');
+      out.textContent = sc.steps[i].out;
+      out.classList.add('live');
+      const s = sc.steps[i];
+      if (i === 0) { setD('d0-conf', s.conf, 'green'); setD('d0-lat', s.lat, 'blue'); setD('d0-cost', s.cost); }
+      if (i === 1) { setD('d1-src', s.src); setD('d1-lat', s.lat, 'blue'); setD('d1-cost', s.cost); }
+      if (i === 2) { setD('d2-chunks', s.chunks); setD('d2-lat', s.lat, 'blue'); setD('d2-cost', s.cost); }
+      if (i === 3) { setD('d3-model', s.model, s.modelClass); setD('d3-reason', s.reason); setD('d3-saving', s.saving, 'green'); }
+      if (i === 4) {
+        setD('d4-score', s.score, s.scoreClass);
+        setD('d4-tier', s.tier);
+        setD('d4-dec', s.dec, s.decClass);
+        if (sc.escalate) node.classList.add('escalated-node');
+      }
+      if (i === 5) { setD('d5-tok', s.tok, 'blue'); setD('d5-lat', s.lat, 'blue'); setD('d5-cost', s.cost); }
+      metrics.classList.add('show');
+      node.classList.remove('active');
+      node.classList.add('done');
+    }
+
+    await sleep(300);
+    const v = sc.verdict;
+    document.getElementById('dv-icon').textContent = v.icon;
+    document.getElementById('dv-action').textContent = v.action;
+    document.getElementById('dv-reason').textContent = v.reason;
+    document.getElementById('dv-cost').textContent = v.cost;
+    document.getElementById('demoVerdict').classList.add('show');
+    document.getElementById('demoReset').classList.add('show');
+    demoRunning = false;
+  }
+
+  function setD(id, val, cls) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = val;
+    el.className = 'dnm-val' + (cls ? ` ${cls}` : '');
+  }
+
+  function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+  document.getElementById('demoInput').addEventListener('keydown', e => { if (e.key === 'Enter') runDemo(); });
+
+  // ── Animate acquisition bars when GTM section scrolls into view ──
+  const barObs = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.querySelectorAll('.acq-bar-fill').forEach(bar => {
+          bar.style.width = bar.dataset.width + '%';
+        });
+        barObs.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.2 });
+
+  const gtmSection = document.getElementById('gtm');
+  if (gtmSection) barObs.observe(gtmSection);
+
+  // ── Scale Figma iframes to fill phone shells ──
+  function scalePhones() {
+    document.querySelectorAll('.phone-shell').forEach(shell => {
+      const frame = shell.querySelector('.phone-figma-frame');
+      if (!frame) return;
+      // Shell inner dimensions (subtract border)
+      const shellW = shell.clientWidth;
+      const shellH = shell.clientHeight;
+      // Figma canvas is 390x844 — scale to fill shell
+      const scaleX = shellW / 390;
+      const scaleY = shellH / 844;
+      const scale = Math.max(scaleX, scaleY); // cover, not contain
+      frame.style.transform = `scale(${scale})`;
+    });
+  }
+
+  // Run on load, resize, and after fonts settle
+  scalePhones();
+  window.addEventListener('resize', scalePhones);
+  setTimeout(scalePhones, 500);
+  setTimeout(scalePhones, 1500);
+</script>
+
+<!-- ── CONTACT ── -->
+<section class="contact-section" id="contact">
+  <div class="contact-wrap">
+
+    <div class="contact-grid reveal">
+
+      <!-- Left: headline + body + CTAs -->
+      <div class="contact-left">
+        <div style="display:flex;align-items:center;gap:16px;margin-bottom:28px;">
+          <img src="profile-photo.png" alt="Kin Hai" style="width:64px;height:64px;border-radius:50%;object-fit:cover;object-position:center top;border:2px solid var(--rule);flex-shrink:0;">
+          <div>
+            <div style="font-family:var(--serif);font-size:20px;font-weight:700;letter-spacing:-0.01em;color:var(--ink);line-height:1.1;">Kin Hai</div>
+            <div style="font-family:var(--mono);font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-faint);margin-top:4px;">Senior AI Product Manager · San Jose, CA</div>
+          </div>
+        </div>
+
+        <div class="contact-eyebrow">Let's Talk</div>
+
+        <div class="contact-status">
+          <div class="contact-status-dot"></div>
+          Available for senior AI PM roles · San Jose, CA
+        </div>
+
+        <h2 class="contact-title">If the problem<br>is hard enough,<br><em>I want in.</em></h2>
+
+        <p class="contact-body">
+          I'm looking for senior AI PM roles where reliability isn't optional —
+          where getting it right means supply chains flow, patients get medication,
+          financial systems stay compliant, or a voice assistant earns someone's trust
+          at the moment they need it most.
+          <strong>That's the standard I build to.</strong>
+          If that sounds like the problem you're working on, I'd like to hear about it.
+        </p>
+
+        <div class="contact-cta-row">
+          <a href="mailto:kinhai@outlook.com" class="contact-btn-primary">Send an email</a>
+          <a href="Kin_Hai_Resume.pdf" target="_blank" class="contact-btn-ghost">Download resume</a>
+        </div>
+      </div>
+
+      <!-- Right: direct links -->
+      <div class="contact-right">
+        <div class="contact-links">
+
+          <a href="mailto:kinhai@outlook.com" class="contact-link-item">
+            <div class="contact-link-left">
+              <span class="contact-link-label">Email</span>
+              <span class="contact-link-value">kinhai@outlook.com</span>
+            </div>
+            <span class="contact-link-arrow">→</span>
+          </a>
+
+          <a href="https://www.linkedin.com/in/kinhai/" target="_blank" class="contact-link-item">
+            <div class="contact-link-left">
+              <span class="contact-link-label">LinkedIn</span>
+              <span class="contact-link-value">linkedin.com/in/kinhai</span>
+            </div>
+            <span class="contact-link-arrow">→</span>
+          </a>
+
+          <a href="https://kinhai-collab.github.io/portfolio/" target="_blank" class="contact-link-item">
+            <div class="contact-link-left">
+              <span class="contact-link-label">Portfolio (live)</span>
+              <span class="contact-link-value">kinhai-collab.github.io/portfolio</span>
+            </div>
+            <span class="contact-link-arrow">→</span>
+          </a>
+
+          <a href="https://kinhai-collab.github.io/imbranding" target="_blank" class="contact-link-item">
+            <div class="contact-link-left">
+              <span class="contact-link-label">Live Product · ImBranding</span>
+              <span class="contact-link-value">kinhai-collab.github.io/imbranding</span>
+            </div>
+            <span class="contact-link-arrow">→</span>
+          </a>
+
+          <a href="https://kinhai-collab.github.io/bytesize-landing" target="_blank" class="contact-link-item">
+            <div class="contact-link-left">
+              <span class="contact-link-label">Live Product · ByteSize</span>
+              <span class="contact-link-value">kinhai-collab.github.io/bytesize-landing</span>
+            </div>
+            <span class="contact-link-arrow">→</span>
+          </a>
+
+        </div>
+      </div>
+
+    </div><!-- /contact-grid -->
+
+  </div>
+
+  <!-- Footer bar -->
+  <div class="footer-bar">
+    <div class="footer-mark"><strong>Kin Hai</strong> · Senior AI Product Manager · San Jose, CA</div>
+    <div class="footer-note">Designed & built with Claude · No templates · 2026</div>
+  </div>
+
+</section>
