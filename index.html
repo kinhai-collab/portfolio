@@ -3343,6 +3343,251 @@
     #orchLogPanel { width: 55%; left: 1%; bottom: 42px; max-height: 100px; }
   }
 
+  /* ── AI TOOLS SECTIONS ── */
+  .ai-tools-section {
+    background: var(--paper);
+    border-top: 1px solid var(--rule);
+    padding: 96px 0 80px;
+  }
+
+  .ai-tools-section.dark {
+    background: var(--ink);
+    border-top: 1px solid #1a1a1a;
+  }
+
+  .ai-tools-wrap {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 48px;
+  }
+
+  .ai-tools-header {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 64px;
+    align-items: end;
+    padding-bottom: 56px;
+    border-bottom: 1px solid var(--rule);
+    margin-bottom: 56px;
+  }
+
+  .ai-tools-section.dark .ai-tools-header {
+    border-bottom-color: #1e1e1e;
+  }
+
+  .ai-tools-eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .ai-tools-eyebrow::before {
+    content: '';
+    display: block;
+    width: 24px;
+    height: 1px;
+    background: var(--accent);
+  }
+
+  .ai-tools-title {
+    font-family: var(--serif);
+    font-size: clamp(24px, 3vw, 38px);
+    font-weight: 900;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+    color: var(--ink);
+  }
+
+  .ai-tools-section.dark .ai-tools-title {
+    color: var(--paper);
+  }
+
+  .ai-tools-title em {
+    font-style: italic;
+    color: var(--accent);
+  }
+
+  .ai-tools-header-body {
+    font-size: 15px;
+    line-height: 1.8;
+    color: var(--ink-muted);
+    font-weight: 300;
+  }
+
+  .ai-tools-section.dark .ai-tools-header-body {
+    color: #b8b4ac;
+  }
+
+  .ai-tools-header-body strong {
+    color: var(--ink);
+    font-weight: 500;
+  }
+
+  .ai-tools-section.dark .ai-tools-header-body strong {
+    color: var(--paper);
+  }
+
+  .ai-tools-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+  }
+
+  .ai-tool-card {
+    background: var(--paper-dark);
+    border: 1px solid var(--rule);
+    border-radius: 0;
+    padding: 44px 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    position: relative;
+    transition: border-color 0.2s;
+  }
+
+  .ai-tool-card:hover {
+    border-color: var(--accent);
+  }
+
+  .ai-tools-section.dark .ai-tool-card {
+    background: #0a0a0a;
+    border-color: #1e1e1e;
+  }
+
+  .ai-tools-section.dark .ai-tool-card:hover {
+    border-color: var(--accent);
+  }
+
+  .ai-tool-card-badge {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border: 1px solid var(--accent-muted);
+    color: var(--accent);
+  }
+
+  .ai-tool-card-badge.coming-soon {
+    border-color: var(--ink-faint);
+    color: var(--ink-faint);
+  }
+
+  .ai-tools-section.dark .ai-tool-card-badge.coming-soon {
+    border-color: #444;
+    color: #666;
+  }
+
+  .ai-tool-card-icon {
+    font-size: 32px;
+    margin-bottom: 24px;
+  }
+
+  .ai-tool-card-name {
+    font-family: var(--serif);
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    margin-bottom: 8px;
+  }
+
+  .ai-tools-section.dark .ai-tool-card-name {
+    color: var(--paper);
+  }
+
+  .ai-tool-card-tagline {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 20px;
+  }
+
+  .ai-tool-card-desc {
+    font-size: 14px;
+    line-height: 1.75;
+    color: var(--ink-muted);
+    font-weight: 300;
+    margin-bottom: 24px;
+    flex: 1;
+  }
+
+  .ai-tools-section.dark .ai-tool-card-desc {
+    color: #999;
+  }
+
+  .ai-tool-card-features {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 24px;
+  }
+
+  .ai-tool-feature-tag {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border: 1px solid var(--rule);
+    color: var(--ink-faint);
+  }
+
+  .ai-tools-section.dark .ai-tool-feature-tag {
+    border-color: #2a2a2a;
+    color: #666;
+  }
+
+  .ai-tool-card-link {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: color 0.2s;
+  }
+
+  .ai-tool-card-link:hover {
+    color: var(--accent);
+  }
+
+  .ai-tool-card-link::after {
+    content: '→';
+  }
+
+  .ai-tool-card.disabled .ai-tool-card-name,
+  .ai-tool-card.disabled .ai-tool-card-tagline,
+  .ai-tool-card.disabled .ai-tool-card-desc {
+    opacity: 0.4;
+  }
+
+  .ai-tools-section.dark .ai-tool-card.disabled .ai-tool-card-name,
+  .ai-tools-section.dark .ai-tool-card.disabled .ai-tool-card-tagline,
+  .ai-tools-section.dark .ai-tool-card.disabled .ai-tool-card-desc {
+    opacity: 0.3;
+  }
+
+  @media (max-width: 900px) {
+    .ai-tools-header { grid-template-columns: 1fr; gap: 24px; }
+    .ai-tools-grid { grid-template-columns: 1fr; }
+    .ai-tool-card { padding: 36px 24px; }
+  }
+
 </style>
 </head>
 <body>
@@ -3359,6 +3604,8 @@
     <li><a href="#orchestration">Orchestration</a></li>
     <li><a href="#enterprise">Enterprise</a></li>
     <li><a href="#lab">Lab</a></li>
+    <li><a href="#genentech-ai">Genentech AI</a></li>
+    <li><a href="#lumentum-ai">Lumentum AI</a></li>
     <li><a href="#pov">POV</a></li>
     <li><a href="#contact">Contact</a></li>
   </ul>
@@ -5242,6 +5489,140 @@
     };
   })();
 </script>
+
+<!-- ── GENENTECH AI TOOLS ── -->
+<section class="ai-tools-section" id="genentech-ai">
+  <div class="ai-tools-wrap">
+
+    <div class="ai-tools-header reveal">
+      <div>
+        <div class="ai-tools-eyebrow">Genentech AI · Applied Tools</div>
+        <h2 class="ai-tools-title">I built the methodology<br>by hand. Then I<br><em>productized it.</em></h2>
+      </div>
+      <p class="ai-tools-header-body">
+        At Genentech, I led a $500M+ SAP EWM deployment across 5 FDA-regulated sites —
+        inventing the Day-in-the-Life testing framework, leading a $10M/day DSCSA crisis recovery,
+        and rewriting warehouse SOPs across two Distribution Centers.
+        <strong>These tools automate the hardest parts of that work using AI —
+        built from direct experience, not theory.</strong>
+      </p>
+    </div>
+
+    <div class="ai-tools-grid reveal">
+
+      <!-- ProcessLens -->
+      <div class="ai-tool-card">
+        <div class="ai-tool-card-badge">Live Demo</div>
+        <div class="ai-tool-card-icon">🔬</div>
+        <div class="ai-tool-card-name">ProcessLens</div>
+        <div class="ai-tool-card-tagline">L4 Process Gap Analyzer</div>
+        <div class="ai-tool-card-desc">
+          Ingests L4 process flow diagrams, analyzes each step against SAP S/4HANA module capabilities,
+          and flags gaps, partial coverage, and cross-workstream dependencies that teams miss when testing in isolation.
+          Auto-generates cross-functional test cases — the exact diagnostic that my DIL framework
+          solved manually across 25-person teams.
+        </div>
+        <div class="ai-tool-card-features">
+          <span class="ai-tool-feature-tag">RAG</span>
+          <span class="ai-tool-feature-tag">Vision AI</span>
+          <span class="ai-tool-feature-tag">SAP EWM</span>
+          <span class="ai-tool-feature-tag">Cross-boundary detection</span>
+          <span class="ai-tool-feature-tag">Test case generation</span>
+        </div>
+        <a href="processlens.html" target="_blank" class="ai-tool-card-link">Launch demo</a>
+      </div>
+
+      <!-- SOPGen -->
+      <div class="ai-tool-card">
+        <div class="ai-tool-card-badge">Live Demo</div>
+        <div class="ai-tool-card-icon">📋</div>
+        <div class="ai-tool-card-name">SOPGen</div>
+        <div class="ai-tool-card-tagline">GxP SOP Generator & Review System</div>
+        <div class="ai-tool-card-desc">
+          Generates GxP-compliant Standard Operating Procedures with regulatory cross-references,
+          compares old vs. new SOPs with categorized differential analysis,
+          and enforces a two-stage review workflow (SME → Process Owner) with full ALCOA+ audit trail.
+          Born from the weeks I spent manually rewriting warehouse SOPs across Hillsboro and Kentucky DCs
+          after the EWM migration.
+        </div>
+        <div class="ai-tool-card-features">
+          <span class="ai-tool-feature-tag">Document control</span>
+          <span class="ai-tool-feature-tag">DSCSA</span>
+          <span class="ai-tool-feature-tag">21 CFR 211</span>
+          <span class="ai-tool-feature-tag">Audit trail</span>
+          <span class="ai-tool-feature-tag">Change classification</span>
+        </div>
+        <a href="sopgen.html" target="_blank" class="ai-tool-card-link">Launch demo</a>
+      </div>
+
+    </div>
+
+  </div>
+</section>
+
+<!-- ── LUMENTUM AI TOOLS ── -->
+<section class="ai-tools-section dark" id="lumentum-ai">
+  <div class="ai-tools-wrap">
+
+    <div class="ai-tools-header reveal">
+      <div>
+        <div class="ai-tools-eyebrow">Lumentum AI · In Development</div>
+        <h2 class="ai-tools-title">The data layer<br>I built for machines.<br><em>Now building the AI.</em></h2>
+      </div>
+      <p class="ai-tools-header-body">
+        At Lumentum, I led a $20M MES program across 5 semiconductor fabs —
+        instrumenting SECS/GEM equipment data capture as a deliberate foundation for
+        future predictive maintenance and yield optimization.
+        <strong>That data layer was the strategic bet. These tools are what it was built for.</strong>
+      </p>
+    </div>
+
+    <div class="ai-tools-grid reveal">
+
+      <!-- Predictive Maintenance -->
+      <div class="ai-tool-card disabled">
+        <div class="ai-tool-card-badge coming-soon">Coming Soon</div>
+        <div class="ai-tool-card-icon" style="opacity:0.3;">⚙</div>
+        <div class="ai-tool-card-name">FabPredict</div>
+        <div class="ai-tool-card-tagline">Predictive Maintenance from SECS/GEM Data</div>
+        <div class="ai-tool-card-desc">
+          Anomaly detection on simulated semiconductor equipment telemetry —
+          chamber pressure, RF power, gas flow rates, vibration patterns.
+          Predicts maintenance windows before unplanned downtime occurs.
+          Built on the SECS/GEM data capture infrastructure I designed at Lumentum.
+        </div>
+        <div class="ai-tool-card-features">
+          <span class="ai-tool-feature-tag">SECS/GEM</span>
+          <span class="ai-tool-feature-tag">Anomaly detection</span>
+          <span class="ai-tool-feature-tag">Time series</span>
+          <span class="ai-tool-feature-tag">Equipment health</span>
+        </div>
+      </div>
+
+      <!-- Yield Optimizer -->
+      <div class="ai-tool-card disabled">
+        <div class="ai-tool-card-badge coming-soon">Coming Soon</div>
+        <div class="ai-tool-card-icon" style="opacity:0.3;">📊</div>
+        <div class="ai-tool-card-name">YieldLens</div>
+        <div class="ai-tool-card-tagline">Recipe Optimization & Defect Correlation</div>
+        <div class="ai-tool-card-desc">
+          Correlates manufacturing recipe parameters with yield outcomes
+          and defect patterns across production runs.
+          Identifies which process variables most impact quality —
+          the analysis that turns SECS/GEM data from operational monitoring into manufacturing intelligence.
+        </div>
+        <div class="ai-tool-card-features">
+          <span class="ai-tool-feature-tag">Yield analysis</span>
+          <span class="ai-tool-feature-tag">Recipe correlation</span>
+          <span class="ai-tool-feature-tag">Defect patterns</span>
+          <span class="ai-tool-feature-tag">MES integration</span>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</section>
 
 <!-- ── POINT OF VIEW ── -->
 <section class="pov-section" id="pov">

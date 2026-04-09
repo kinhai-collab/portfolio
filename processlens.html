@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ProcessLens — L4 Gap Analyzer</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'DM Sans', 'Helvetica Neue', sans-serif; background: #f1f5f9; }
+    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+const { useState, useCallback, useRef, useEffect } = React;
+
+// ─── S4/HANA REFERENCE KNOWLEDGE ───
+const S4_KNOWLEDGE = {
+  "EWM": {
+    capabilities: [
+      "Yard Management — dock scheduling, truck check-in/check-out, departure confirmation",
+      "Handling Unit management — deconsolidation, RF scanning, barcode framework",
+      "Putaway strategies — storage type/section search, rule-based bin determination",
+      "Stock type management — basic QI hold, blocked stock, available stock",
+      "Wave management — pick wave creation, release, monitoring",
+      "Outbound delivery processing — shipping, loading, goods issue",
+      "Physical inventory — cycle counting, wall-to-wall counts",
+      "Labor management — task interleaving, resource planning",
+    ],
+    gaps: [
+      "No native DSCSA serialization verification at item level",
+      "No human-optimized pick routing (default designed for automated warehouses)",
+      "No pre-EWM SKU grouping/consolidation interface",
+      "GxP lot-level inspection routing requires QM module integration (not default)",
+    ],
+  },
+  "Finance": {
+    capabilities: [
+      "Goods Receipt posting (MIGO equivalent) — FI-MM integration",
+      "Invoice verification — logistics invoice processing",
+      "Asset accounting — capitalization, depreciation",
+      "Cost center accounting — overhead allocation",
+      "Profit center accounting — segment reporting",
+      "Accounts payable/receivable — payment processing, dunning",
+    ],
+    gaps: [
+      "Real-time GR posting triggered by EWM events not configured by default — requires integration setup",
+      "No automatic three-way match validation triggered from warehouse confirmation",
+    ],
+  },
+  "Plan": {
+    capabilities: [
+      "MRP — Material Requirements Planning, net requirements calculation",
+      "Demand management — forecast consumption, planned independent requirements",
+      "Production scheduling — capacity leveling, sequencing",
+      "Supply network planning — multi-site planning",
+    ],
+    gaps: [
+      "MRP runs typically batched (nightly) — real-time trigger from EWM putaway not default",
+      "No automatic safety stock adjustment based on receiving velocity",
+    ],
+  },
+  "Procurement": {
+    capabilities: [
+      "Purchase requisition and order processing",
+      "Vendor evaluation and source determination",
+      "Contract management — scheduling agreements, outline agreements",
+      "Goods receipt processing — PO-based receiving",
+    ],
+    gaps: [],
+  },
+  "Manufacturing": {
+    capabilities: [
+      "Production order management — create, release, confirm",
+      "Process order management — batch/continuous manufacturing",
+      "MES integration — SECS/GEM equipment communication",
+      "Quality management — inspection lots, usage decisions",
+      "Batch management — batch determination, classification",
+    ],
+    gaps: [
+      "SECS/GEM integration requires custom middleware for real-time equipment data capture",
+    ],
+  },
+  "Commercial": {
+    capabilities: [
+      "Sales order processing — ATP checks, pricing, billing",
+      "Delivery processing — outbound delivery creation, picking",
+      "Returns processing — credit memos, return orders",
+    ],
+    gaps: [],
+  },
+};
+
+const WORKSTREAMS = Object.keys(S4_KNOWLEDGE);
+
+const statusConfig = {
+  covered: { label: "Covered", color: "#16a34a", bg: "#f0fdf4", border: "#bbf7d0", icon: "✓" },
+  partial: { label: "Partial", color: "#d97706", bg: "#fffbeb", border: "#fde68a", icon: "◐" },
+  gap: { label: "Gap", color: "#dc2626", bg: "#fef2f2", border: "#fecaca", icon: "✕" },
+  "cross-boundary": { label: "Cross-Boundary", color: "#7c3aed", bg: "#f5f3ff", border: "#ddd6fe", icon: "↗" },
+};
+
+// ─── PRE-POPULATED DATA ───
+const PREPOP_EWM_STEPS = [
+  { id: 1, name: "Truck Arrives at DC", workstream: "EWM", status: "covered", detail: "SAP EWM Yard Management handles dock scheduling and truck check-in. Standard functionality — no configuration gap.", s4Module: "EWM-YM", resolution: null, verified: undefined },
+  { id: 2, name: "Unload & Scan Inbound", workstream: "EWM", status: "covered", detail: "EWM Deconsolidation + RF scanning. Covered by standard Handling Unit management. Barcode/RF framework supports all inbound scan workflows.", s4Module: "EWM-HU", resolution: null, verified: undefined },
+  { id: 3, name: "Goods Receipt Posting", workstream: "EWM", status: "cross-boundary", detail: "This step implies a Financial Goods Receipt posting (MIGO transaction equivalent in S/4HANA). This is owned by the Finance workstream — not EWM. The Finance team's L4 process map must account for the timing dependency with EWM inbound scanning. If FI posting is delayed or misconfigured, EWM inventory quantities will be incorrect downstream.", crossRef: "Finance → FI-Posting-L4", severity: "high", s4Module: "FI-MM Integration", resolution: null, verified: true, testCase: { id: "TC-XF-001", text: "Validate GR posting in FI triggers correctly and within SLA from EWM inbound scan completion — confirm inventory quantities sync between EWM and FI", teams: ["Finance", "EWM"], priority: "P1" } },
+  { id: 4, name: "Quality Inspection Hold", workstream: "EWM", status: "partial", detail: "EWM stock type management supports basic QI hold functionality. However, GxP lot-level inspection routing — required for FDA-regulated pharmaceutical products — requires QM module integration that is not currently configured in the S/4HANA instance. Partial coverage means basic holds work but regulated inspection workflows will fail.", s4Module: "EWM + QM", resolution: "Customization — configure QM integration for lot-level GxP routing per FDA requirements", verified: undefined, testCase: { id: "TC-CFG-001", text: "Verify QI hold triggers lot-level inspection routing per GxP requirements — confirm inspection lot creation and usage decision workflow", teams: ["EWM", "Quality"], priority: "P1" } },
+  { id: 5, name: "DSCSA Serial Verification", workstream: "EWM", status: "gap", detail: "No native S/4HANA or EWM capability exists for DSCSA serialization verification at the individual item level. Federal compliance requires scanning and verifying unique serial numbers against the DSCSA database before inventory can be accepted. This is a hard gap — cannot be solved with configuration alone.", s4Module: "None", resolution: "Custom Build — pre-EWM scanning interface for serial capture and verification upstream of SAP", verified: undefined, testCase: { id: "TC-GAP-001", text: "DSCSA item-level serial verification — requires custom build. No S/4 coverage. Must validate before any compliance testing can proceed.", teams: ["EWM", "Compliance", "Engineering"], priority: "P0" } },
+  { id: 6, name: "Putaway to Storage Bin", workstream: "EWM", status: "covered", detail: "EWM putaway strategy with storage type and section search. Supports rule-based bin determination including fixed bin, open storage, and next empty bin strategies. Standard functionality — fully covered.", s4Module: "EWM-PSS", resolution: null, verified: undefined },
+  { id: 7, name: "Update Planning Quantities", workstream: "EWM", status: "cross-boundary", detail: "Putaway confirmation should trigger an MRP quantity update in the PP/Plan module. Currently, MRP runs are batched nightly — meaning the Plan team operates on stale inventory data for up to 24 hours after putaway. The Plan team's L4 does not account for real-time putaway signals from EWM, creating a scheduling blind spot.", crossRef: "Plan → MRP-Run-L4", severity: "medium", s4Module: "PP-MRP", resolution: null, verified: false, testCase: { id: "TC-XF-002", text: "Verify MRP quantities reflect putaway confirmation within 15-minute SLA — not next nightly batch run. Confirm planning accuracy.", teams: ["Plan", "EWM"], priority: "P2" } },
+  { id: 8, name: "Truck Departure Confirmation", workstream: "EWM", status: "covered", detail: "Yard Management departure workflow. Standard EWM — check-out, dock release, and departure confirmation all covered by standard functionality.", s4Module: "EWM-YM", resolution: null, verified: undefined },
+];
+
+const PREPOP_FI_STEPS = [
+  { id: 1, name: "Receive GR Notification", workstream: "Finance", status: "cross-boundary", detail: "Finance receives goods receipt notification triggered by EWM inbound processing. This is the downstream partner to EWM Step 3. The timing and reliability of this trigger is critical — if EWM completes scanning but the FI posting is delayed, inventory records diverge between warehouse and finance.", crossRef: "EWM → Inbound-DC-Receiving-L4", severity: "high", s4Module: "FI-MM Integration", resolution: null, verified: true, testCase: { id: "TC-XF-003", text: "Validate FI GR notification is received within SLA of EWM scan completion — confirm no orphaned EWM records without corresponding FI posting", teams: ["Finance", "EWM"], priority: "P1" } },
+  { id: 2, name: "Post Goods Receipt in FI", workstream: "Finance", status: "covered", detail: "Standard MIGO-equivalent posting in S/4HANA. Material document and accounting document created simultaneously. FI-MM integration handles valuation and account determination automatically.", s4Module: "FI-MM", resolution: null, verified: undefined },
+  { id: 3, name: "Three-Way Match Validation", workstream: "Finance", status: "partial", detail: "S/4HANA supports invoice verification with three-way match (PO, GR, Invoice). However, automatic validation triggered directly from warehouse confirmation events is not configured by default — requires custom workflow or integration.", s4Module: "FI-IV", resolution: "Configuration — set up automatic three-way match trigger from GR posting event", verified: undefined, testCase: { id: "TC-CFG-002", text: "Verify three-way match validation fires automatically upon GR posting — confirm no manual intervention required for standard PO receipts", teams: ["Finance", "Procurement"], priority: "P2" } },
+  { id: 4, name: "Update Cost Center Allocation", workstream: "Finance", status: "covered", detail: "Automatic cost center posting based on account determination rules. Standard S/4HANA overhead allocation — no gap.", s4Module: "FI-CO", resolution: null, verified: undefined },
+  { id: 5, name: "Generate Accrual Entry", workstream: "Finance", status: "covered", detail: "Period-end accrual postings for received but not invoiced goods. Standard FI functionality with automatic reversal in next period.", s4Module: "FI-GL", resolution: null, verified: undefined },
+  { id: 6, name: "Notify Procurement of Receipt", workstream: "Finance", status: "cross-boundary", detail: "Finance posting should trigger a procurement notification confirming receipt against the purchase order. Procurement's L4 requires this confirmation to update vendor delivery performance scoring and release subsequent PO schedules.", crossRef: "Procurement → PO-Lifecycle-L4", severity: "low", s4Module: "MM-PUR", resolution: null, verified: false, testCase: { id: "TC-XF-004", text: "Confirm procurement receives GR confirmation and vendor delivery score updates within same business day", teams: ["Finance", "Procurement"], priority: "P3" } },
+];
+
+const PREPOP_EWM_OUTBOUND_STEPS = [
+  { id: 1, name: "Sales Order Received", workstream: "EWM", status: "cross-boundary", detail: "Outbound process is triggered by a sales order created in the Commercial workstream. EWM receives the delivery request via SD-EWM integration. If the sales order contains ATP confirmation errors or incorrect ship-to data, EWM picks and ships incorrectly — but the root cause sits in Commercial, not warehouse.", crossRef: "Commercial → Sales-Order-Processing-L4", severity: "high", s4Module: "SD-EWM Integration", resolution: null, verified: false, testCase: { id: "TC-XF-005", text: "Validate delivery request from SD contains accurate ATP confirmation and ship-to data before EWM wave creation — confirm no orphaned deliveries from rejected orders", teams: ["Commercial", "EWM"], priority: "P1" } },
+  { id: 2, name: "Wave Creation & Release", workstream: "EWM", status: "covered", detail: "EWM wave management creates and releases pick waves based on delivery priority, shipping deadlines, and warehouse zone grouping. Standard functionality — fully covered.", s4Module: "EWM-Wave", resolution: null, verified: undefined },
+  { id: 3, name: "Pick Task Assignment", workstream: "EWM", status: "partial", detail: "EWM supports task interleaving and RF-directed picking. However, human-optimized pick routing is not available — default routing is designed for automated warehouse machines. Pickers follow suboptimal paths, increasing pick time and labor cost.", s4Module: "EWM-Pick", resolution: "Custom Build — human-optimized pick routing tool extracting data from EWM to generate optimal human walking paths", verified: undefined, testCase: { id: "TC-CFG-003", text: "Benchmark pick completion time with default EWM routing vs. human-optimized routes — quantify labor impact", teams: ["EWM", "Engineering"], priority: "P2" } },
+  { id: 4, name: "Packing & HU Creation", workstream: "EWM", status: "covered", detail: "Handling Unit creation during packing. Standard EWM packing station functionality with HU-managed storage and shipping HU generation. Fully covered.", s4Module: "EWM-Pack", resolution: null, verified: undefined },
+  { id: 5, name: "DSCSA Serialization — Outbound", workstream: "EWM", status: "gap", detail: "Outbound DSCSA compliance requires transaction history (T3) document generation with full serial number chain for every shipped pharmaceutical item. No native S/4HANA capability exists for generating compliant T3 documents at the item-serial level during outbound processing.", s4Module: "None", resolution: "Custom Build — outbound serialization verification and T3 document generation interface integrated with packing station workflow", verified: undefined, testCase: { id: "TC-GAP-002", text: "DSCSA outbound T3 document generation — no S/4 coverage. Custom build required. Must validate serial chain completeness before any shipment.", teams: ["EWM", "Compliance", "Engineering"], priority: "P0" } },
+  { id: 6, name: "Loading & Truck Assignment", workstream: "EWM", status: "covered", detail: "Yard Management dock door assignment and loading sequence. Standard EWM functionality with shipment-to-dock mapping.", s4Module: "EWM-YM", resolution: null, verified: undefined },
+  { id: 7, name: "Goods Issue Posting", workstream: "EWM", status: "cross-boundary", detail: "Goods Issue triggers FI posting for inventory reduction and COGS recognition. Finance must receive this event to close the billing cycle. If GI posting is delayed or fails, Finance shows inventory that has physically left the building — creating audit exposure.", crossRef: "Finance → FI-Posting-L4", severity: "high", s4Module: "FI-MM Integration", resolution: null, verified: true, testCase: { id: "TC-XF-006", text: "Validate GI posting triggers FI inventory reduction and COGS entry within SLA — confirm no phantom inventory in Finance", teams: ["Finance", "EWM"], priority: "P1" } },
+  { id: 8, name: "Delivery Confirmation to SD", workstream: "EWM", status: "cross-boundary", detail: "EWM must confirm delivery completion back to the Commercial workstream so SD can trigger billing document creation and customer notification. If confirmation is delayed, invoicing is delayed and customer SLAs are missed.", crossRef: "Commercial → Sales-Order-Processing-L4", severity: "medium", s4Module: "SD-EWM Integration", resolution: null, verified: false, testCase: { id: "TC-XF-007", text: "Confirm delivery completion status propagates from EWM to SD within 30 minutes — validate billing document auto-creation", teams: ["Commercial", "EWM"], priority: "P2" } },
+];
+
+const PREPOP_PLAN_STEPS = [
+  { id: 1, name: "Demand Forecast Consumption", workstream: "Plan", status: "covered", detail: "Planned Independent Requirements consumed against incoming sales orders. Standard PP-SOP/Demand Management functionality. Forecast accuracy drives downstream MRP quality.", s4Module: "PP-SOP", resolution: null, verified: undefined },
+  { id: 2, name: "MRP Run — Net Requirements", workstream: "Plan", status: "partial", detail: "MRP calculates net requirements based on current stock, demand, and lead times. Standard PP-MRP functionality. However, MRP runs are batched nightly by default — not triggered by real-time inventory events from EWM. Planning operates on stale data for up to 24 hours.", s4Module: "PP-MRP", resolution: "Configuration — implement event-driven MRP or reduce batch interval to 15 minutes", verified: undefined, testCase: { id: "TC-CFG-004", text: "Validate MRP net requirements reflect real-time inventory within 15-minute window — confirm no planning on stale putaway data", teams: ["Plan", "EWM"], priority: "P2" } },
+  { id: 3, name: "Generate Purchase Requisitions", workstream: "Plan", status: "cross-boundary", detail: "MRP output generates planned orders and purchase requisitions for raw materials. These requisitions flow to Procurement for conversion to purchase orders. If Procurement's L4 does not account for the volume or timing of MRP-generated requisitions, vendor lead times will be missed and production will stall.", crossRef: "Procurement → PO-Lifecycle-L4", severity: "high", s4Module: "PP-MRP → MM-PUR", resolution: null, verified: false, testCase: { id: "TC-XF-008", text: "Validate MRP-generated purchase requisitions are visible in Procurement within same MRP run cycle — confirm no orphaned requisitions", teams: ["Plan", "Procurement"], priority: "P1" } },
+  { id: 4, name: "Capacity Leveling", workstream: "Plan", status: "covered", detail: "Finite capacity planning across work centers. Standard PP-CRP functionality — capacity evaluation, overload detection, and order rescheduling.", s4Module: "PP-CRP", resolution: null, verified: undefined },
+  { id: 5, name: "Convert Planned Orders to Production", workstream: "Plan", status: "cross-boundary", detail: "Planned orders are converted to production orders and released to Manufacturing for execution. Manufacturing's L4 must account for the handoff — if production order release timing doesn't align with shop floor scheduling, orders queue without execution.", crossRef: "Manufacturing → Production-Order-Execution-L4", severity: "high", s4Module: "PP → PP-SFC", resolution: null, verified: false, testCase: { id: "TC-XF-009", text: "Validate production order release from Plan appears in Manufacturing execution queue within 1 hour — confirm shop floor scheduling reflects new orders", teams: ["Plan", "Manufacturing"], priority: "P1" } },
+  { id: 6, name: "BOM Explosion & Component Check", workstream: "Plan", status: "covered", detail: "Bill of Materials explosion for planned/production orders with component availability check. Standard PP-BD functionality — multi-level BOM support, alternative BOM selection.", s4Module: "PP-BD", resolution: null, verified: undefined },
+  { id: 7, name: "Safety Stock Evaluation", workstream: "Plan", status: "partial", detail: "Static safety stock levels maintained in material master. S/4HANA does not natively adjust safety stock based on real-time receiving velocity or demand variability signals. Planning relies on periodic manual review of safety stock parameters.", s4Module: "PP-MRP", resolution: "Enhancement — implement dynamic safety stock calculation based on receiving velocity and demand MAPE", verified: undefined, testCase: { id: "TC-CFG-005", text: "Validate safety stock parameters are reviewed and adjusted based on trailing 30-day demand variability — confirm no stockouts from stale safety stock levels", teams: ["Plan"], priority: "P3" } },
+  { id: 8, name: "Raw Material Availability Signal", workstream: "Plan", status: "cross-boundary", detail: "Plan requires confirmation from Procurement that raw materials are on track for delivery against purchase order schedules. Without this signal, production planning assumes on-time delivery and does not trigger replanning when vendors are late.", crossRef: "Procurement → PO-Lifecycle-L4", severity: "medium", s4Module: "MM-PUR → PP", resolution: null, verified: false, testCase: { id: "TC-XF-010", text: "Validate Procurement vendor delivery status updates are reflected in MRP availability check — confirm replanning triggers when PO delivery dates slip", teams: ["Plan", "Procurement"], priority: "P2" } },
+];
+
+const INITIAL_FLOWS = [
+  {
+    id: 1,
+    name: "Inbound DC Receiving",
+    workstream: "EWM",
+    steps: PREPOP_EWM_STEPS,
+    fileName: "EWM_Inbound_DC_Receiving_L4.pdf",
+    date: "2026-04-07",
+  },
+  {
+    id: 2,
+    name: "Goods Receipt & Posting",
+    workstream: "Finance",
+    steps: PREPOP_FI_STEPS,
+    fileName: "FI_Goods_Receipt_Posting_L4.pdf",
+    date: "2026-04-08",
+  },
+  {
+    id: 3,
+    name: "Outbound Shipping",
+    workstream: "EWM",
+    steps: PREPOP_EWM_OUTBOUND_STEPS,
+    fileName: "EWM_Outbound_Shipping_L4.pdf",
+    date: "2026-04-08",
+  },
+  {
+    id: 4,
+    name: "Production Planning & MRP",
+    workstream: "Plan",
+    steps: PREPOP_PLAN_STEPS,
+    fileName: "PP_Production_Planning_MRP_L4.pdf",
+    date: "2026-04-09",
+  },
+];
+
+const INITIAL_L4_FILES = [
+  { name: "EWM_Inbound_DC_Receiving_L4.pdf", workstream: "EWM", steps: 8, status: "Analyzed", date: "2026-04-07" },
+  { name: "FI_Goods_Receipt_Posting_L4.pdf", workstream: "Finance", steps: 6, status: "Analyzed", date: "2026-04-08" },
+  { name: "EWM_Outbound_Shipping_L4.pdf", workstream: "EWM", steps: 8, status: "Analyzed", date: "2026-04-08" },
+  { name: "PP_Production_Planning_MRP_L4.pdf", workstream: "Plan", steps: 8, status: "Analyzed", date: "2026-04-09" },
+];
+
+const INITIAL_S4_FILES = [
+  { name: "S4HANA_2023_EWM_Module_Guide.pdf", module: "EWM", chunks: 1847, status: "Indexed" },
+  { name: "S4HANA_2023_FI_Integration_Notes.pdf", module: "Finance", chunks: 694, status: "Indexed" },
+  { name: "S4HANA_2023_PP_MRP_Guide.pdf", module: "Plan", chunks: 412, status: "Indexed" },
+  { name: "S4HANA_QM_Configuration_Guide.pdf", module: "QM", chunks: 389, status: "Indexed" },
+  { name: "S4HANA_MM_Procurement_Guide.pdf", module: "Procurement", chunks: 521, status: "Indexed" },
+  { name: "S4HANA_SD_Sales_Distribution.pdf", module: "Commercial", chunks: 738, status: "Indexed" },
+  { name: "S4HANA_PP_SFC_Manufacturing.pdf", module: "Manufacturing", chunks: 612, status: "Indexed" },
+  { name: "S4HANA_2023_Release_Notes.pdf", module: "All", chunks: 1203, status: "Indexed" },
+];
+
+// ─── COMPONENTS ───
+function FlowNode({ step, isSelected, onClick }) {
+  const cfg = statusConfig[step.status] || statusConfig.covered;
+  return (
+    <div onClick={onClick} style={{
+      cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 6,
+      padding: "12px 10px", width: 110, flexShrink: 0,
+      background: isSelected ? cfg.bg : "#fff",
+      border: `2px solid ${isSelected ? cfg.color : cfg.border}`,
+      borderRadius: 12, transition: "all 0.15s",
+      boxShadow: isSelected ? `0 0 0 3px ${cfg.color}22` : "0 1px 3px rgba(0,0,0,0.04)",
+      position: "relative",
+    }}>
+      {step.verified === false && (
+        <div style={{ position: "absolute", top: -6, right: -6, width: 16, height: 16, borderRadius: "50%", background: "#f59e0b", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, color: "#fff", fontWeight: 700, border: "2px solid #fff" }}>!</div>
+      )}
+      <div style={{ width: 28, height: 28, borderRadius: "50%", background: cfg.bg, border: `2px solid ${cfg.color}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, color: cfg.color }}>{cfg.icon}</div>
+      <div style={{ fontSize: 10, fontWeight: 600, color: "#334155", textAlign: "center", lineHeight: 1.3, minHeight: 26 }}>{step.name}</div>
+      <div style={{ fontSize: 8, fontWeight: 600, color: cfg.color, letterSpacing: 0.5, textTransform: "uppercase" }}>{cfg.label}</div>
+    </div>
+  );
+}
+
+function FlowArrow() {
+  return (
+    <div style={{ display: "flex", alignItems: "center", flexShrink: 0, width: 28, justifyContent: "center" }}>
+      <div style={{ width: 16, height: 1.5, background: "#cbd5e1" }} />
+      <div style={{ width: 0, height: 0, borderTop: "4px solid transparent", borderBottom: "4px solid transparent", borderLeft: "6px solid #cbd5e1" }} />
+    </div>
+  );
+}
+
+function UploadZone({ title, description, icon, files, onUpload, columns, loading }) {
+  const [dragOver, setDragOver] = useState(false);
+  const inputRef = useRef(null);
+  const handleFiles = useCallback((fl) => { Array.from(fl).forEach(f => onUpload(f)); }, [onUpload]);
+  return (
+    <div style={{ flex: 1, background: "#fff", borderRadius: 12, border: "1px solid #e2e8f0", overflow: "hidden" }}>
+      <div style={{ padding: "16px 20px", borderBottom: "1px solid #f1f5f9", display: "flex", alignItems: "center", gap: 10 }}>
+        <span style={{ fontSize: 18 }}>{icon}</span>
+        <div>
+          <div style={{ fontSize: 14, fontWeight: 600, color: "#0f172a" }}>{title}</div>
+          <div style={{ fontSize: 11, color: "#94a3b8" }}>{description}</div>
+        </div>
+      </div>
+      <div onClick={() => inputRef.current?.click()}
+        onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+        onDragLeave={() => setDragOver(false)}
+        onDrop={(e) => { e.preventDefault(); setDragOver(false); handleFiles(e.dataTransfer.files); }}
+        style={{ margin: "12px 16px", padding: "20px", borderRadius: 10, border: `2px dashed ${dragOver ? "#4f46e5" : "#e2e8f0"}`, background: dragOver ? "#eef2ff" : "#f8fafc", textAlign: "center", cursor: "pointer", transition: "all 0.15s" }}>
+        <input ref={inputRef} type="file" accept="image/*,.pdf" multiple style={{ display: "none" }} onChange={(e) => handleFiles(e.target.files)} />
+        {loading ? (
+          <div style={{ fontSize: 13, color: "#4f46e5", fontWeight: 500 }}>⏳ Analyzing with Claude Haiku...</div>
+        ) : (<>
+          <div style={{ fontSize: 22, marginBottom: 4 }}>📄</div>
+          <div style={{ fontSize: 12, fontWeight: 500, color: "#64748b" }}>Drop files here or click to upload</div>
+          <div style={{ fontSize: 10, color: "#94a3b8", marginTop: 2 }}>PNG, JPEG, PDF</div>
+        </>)}
+      </div>
+      <div style={{ padding: "0 16px 16px" }}>
+        {files.length > 0 && (<>
+          <div style={{ fontSize: 10, fontWeight: 600, color: "#94a3b8", letterSpacing: 1, marginBottom: 8, textTransform: "uppercase" }}>Ingested</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            {files.map((f, i) => (
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", background: "#f8fafc", borderRadius: 8, fontSize: 12 }}>
+                <span style={{ fontSize: 14 }}>📋</span>
+                <span style={{ flex: 1, fontWeight: 500, color: "#334155", fontSize: 11 }}>{f.name}</span>
+                {columns.map((col, ci) => (
+                  <span key={ci} style={{ fontSize: 10, color: "#64748b", padding: "2px 8px", background: "#e2e8f0", borderRadius: 6 }}>{col.render(f)}</span>
+                ))}
+                <span style={{ fontSize: 10, fontWeight: 600, color: "#16a34a", padding: "2px 8px", background: "#f0fdf4", borderRadius: 6 }}>{f.status}</span>
+              </div>
+            ))}
+          </div>
+        </>)}
+      </div>
+    </div>
+  );
+}
+
+function EditableStep({ step, onUpdate }) {
+  const [editing, setEditing] = useState(false);
+  const [name, setName] = useState(step.name);
+  const [ws, setWs] = useState(step.workstream || "");
+  if (!editing) return <button onClick={() => setEditing(true)} style={{ fontSize: 10, color: "#4f46e5", background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline" }}>Edit step</button>;
+  return (
+    <div style={{ display: "flex", gap: 8, alignItems: "center", marginTop: 8 }}>
+      <input value={name} onChange={e => setName(e.target.value)} style={{ fontSize: 12, padding: "4px 8px", border: "1px solid #cbd5e1", borderRadius: 6, flex: 1 }} />
+      <select value={ws} onChange={e => setWs(e.target.value)} style={{ fontSize: 11, padding: "4px 6px", border: "1px solid #cbd5e1", borderRadius: 6 }}>
+        {WORKSTREAMS.map(w => <option key={w} value={w}>{w}</option>)}
+      </select>
+      <button onClick={() => { onUpdate({ ...step, name, workstream: ws }); setEditing(false); }} style={{ fontSize: 11, padding: "4px 10px", background: "#4f46e5", color: "#fff", border: "none", borderRadius: 6, cursor: "pointer" }}>Save</button>
+      <button onClick={() => { setName(step.name); setWs(step.workstream); setEditing(false); }} style={{ fontSize: 11, padding: "4px 10px", background: "#f1f5f9", color: "#64748b", border: "none", borderRadius: 6, cursor: "pointer" }}>Cancel</button>
+    </div>
+  );
+}
+
+// ─── MAIN ───
+function App() {
+  const [activeTab, setActiveTab] = useState("analysis");
+  const [selected, setSelected] = useState(3);
+  const [l4Files, setL4Files] = useState(INITIAL_L4_FILES);
+  const [s4Files, setS4Files] = useState(INITIAL_S4_FILES);
+  const [l4Loading, setL4Loading] = useState(false);
+  const [s4Loading, setS4Loading] = useState(false);
+  const [processFlows, setProcessFlows] = useState(INITIAL_FLOWS);
+  const [activeFlow, setActiveFlow] = useState(1);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [error, setError] = useState(null);
+
+  const handleL4Upload = useCallback(async (file) => {
+    setL4Loading(true); setError(null);
+    try {
+      // Simulated analysis for portfolio demo
+      await new Promise(r => setTimeout(r, 2500));
+      const ws = "EWM";
+      const analyzedSteps = [
+        { id: 1, name: "Process Start", workstream: ws, status: "covered", detail: "Standard SAP EWM functionality — fully covered.", s4Module: "EWM", verified: undefined },
+        { id: 2, name: "Data Capture", workstream: ws, status: "partial", detail: "Requires additional configuration for GxP compliance.", s4Module: "EWM + QM", resolution: "Configuration required", verified: undefined },
+        { id: 3, name: "Cross-System Update", workstream: ws, status: "cross-boundary", detail: "This step depends on Finance module posting. Timing dependency must be validated.", crossRef: "Finance → FI-Posting-L4", severity: "medium", s4Module: "FI-MM", verified: false, testCase: { id: "TC-XF-NEW", text: "Validate cross-system update completes within SLA", teams: ["Finance", "EWM"], priority: "P2" } },
+      ];
+      const newFlow = { id: Date.now(), name: file.name.replace(/\.[^.]+$/, ""), workstream: ws, steps: analyzedSteps, fileName: file.name, date: new Date().toISOString().split("T")[0] };
+      setProcessFlows(prev => [...prev, newFlow]);
+      setActiveFlow(newFlow.id);
+      setL4Files(prev => [...prev, { name: file.name, workstream: ws, steps: analyzedSteps.length, status: "Analyzed", date: newFlow.date }]);
+      setActiveTab("analysis"); setSelected(null);
+    } catch (err) { setError("Analysis failed: " + (err.message || "Unknown error")); }
+    finally { setL4Loading(false); }
+  }, []);
+
+  const handleS4Upload = useCallback(async (file) => {
+    setS4Loading(true);
+    await new Promise(r => setTimeout(r, 1500));
+    setS4Files(prev => [...prev, { name: file.name, module: "Custom", chunks: Math.floor(Math.random() * 800) + 200, status: "Indexed" }]);
+    setS4Loading(false);
+  }, []);
+
+  const handleSync = useCallback(async () => {
+    setSyncing(true);
+    const allWorkstreams = new Set(processFlows.map(f => f.workstream));
+    setProcessFlows(prev => prev.map(flow => ({
+      ...flow,
+      steps: flow.steps.map(step => {
+        if (step.status !== "cross-boundary") return step;
+        const target = step.crossRef?.split("→")[0]?.trim() || "";
+        return { ...step, verified: allWorkstreams.has(target) };
+      }),
+    })));
+    await new Promise(r => setTimeout(r, 1200));
+    setSyncing(false);
+  }, [processFlows]);
+
+  const handleStepUpdate = useCallback((flowId, updatedStep) => {
+    setProcessFlows(prev => prev.map(flow => flow.id !== flowId ? flow : { ...flow, steps: flow.steps.map(s => s.id === updatedStep.id ? updatedStep : s) }));
+  }, []);
+
+  const currentFlow = processFlows.find(f => f.id === activeFlow);
+  const selectedStep = currentFlow?.steps.find(s => s.id === selected);
+  const allTestCases = processFlows.flatMap(f => f.steps.filter(s => s.testCase).map(s => ({ ...s.testCase, stepName: s.name, status: s.status, flowName: f.name, workstream: f.workstream })));
+  const wsCoverage = WORKSTREAMS.map(ws => ({
+    ws,
+    l4s: processFlows.filter(f => f.workstream === ws).length,
+    s4Docs: s4Files.filter(f => f.module === ws || f.module === "All" || f.module === "QM").length,
+    status: processFlows.some(f => f.workstream === ws) && s4Files.some(f => f.module === ws || f.module === "All") ? "Ready" : processFlows.some(f => f.workstream === ws) || s4Files.some(f => f.module === ws) ? "Partial" : "Missing",
+  }));
+
+  const unverifiedCount = processFlows.reduce((sum, f) => sum + f.steps.filter(s => s.verified === false).length, 0);
+
+  return (
+    <div style={{ fontFamily: "'DM Sans', 'Helvetica Neue', sans-serif", background: "#f1f5f9", minHeight: "100vh" }}>
+      <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+      {/* Top Bar */}
+      <div style={{ background: "#fff", borderBottom: "1px solid #e2e8f0", padding: "14px 32px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><rect width="28" height="28" rx="7" fill="#4f46e5"/><path d="M8 14h12M14 8v12" stroke="#fff" strokeWidth="2.5" strokeLinecap="round"/></svg>
+          <span style={{ fontSize: 16, fontWeight: 700, color: "#0f172a" }}>ProcessLens</span>
+          <span style={{ fontSize: 11, color: "#94a3b8", marginLeft: 4 }}>L4 Gap Analyzer</span>
+        </div>
+        <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
+          {[
+            { id: "knowledge", label: "Knowledge Base" },
+            { id: "analysis", label: "Gap Analysis" },
+            { id: "tests", label: `Test Cases` },
+          ].map(tab => (
+            <button key={tab.id} onClick={() => setActiveTab(tab.id)} style={{
+              padding: "6px 16px", fontSize: 12, fontWeight: 600,
+              background: activeTab === tab.id ? "#4f46e5" : "transparent",
+              color: activeTab === tab.id ? "#fff" : "#64748b",
+              border: "none", borderRadius: 8, cursor: "pointer", position: "relative",
+            }}>
+              {tab.label}
+              {tab.id === "tests" && allTestCases.length > 0 && (
+                <span style={{ marginLeft: 6, fontSize: 10, padding: "1px 6px", background: activeTab === tab.id ? "rgba(255,255,255,0.2)" : "#e2e8f0", borderRadius: 8 }}>{allTestCases.length}</span>
+              )}
+            </button>
+          ))}
+          <div style={{ width: 1, height: 24, background: "#e2e8f0", margin: "0 8px" }} />
+          <button onClick={handleSync} disabled={syncing || processFlows.length < 1} style={{
+            padding: "6px 14px", fontSize: 11, fontWeight: 600,
+            background: syncing ? "#e2e8f0" : "#f0fdf4", color: syncing ? "#94a3b8" : "#16a34a",
+            border: "1px solid #bbf7d0", borderRadius: 8, cursor: syncing ? "default" : "pointer",
+            display: "flex", alignItems: "center", gap: 6,
+          }}>
+            <span style={{ display: "inline-block", animation: syncing ? "spin 1s linear infinite" : "none" }}>🔄</span>
+            {syncing ? "Syncing..." : "Sync"}
+            {unverifiedCount > 0 && !syncing && (
+              <span style={{ fontSize: 9, padding: "1px 5px", background: "#fef3c7", color: "#d97706", borderRadius: 6, fontWeight: 700 }}>{unverifiedCount}</span>
+            )}
+            <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+          </button>
+        </div>
+      </div>
+
+      {error && (
+        <div style={{ margin: "16px 32px 0", padding: "12px 20px", background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 10, fontSize: 13, color: "#dc2626", display: "flex", justifyContent: "space-between" }}>
+          <span>{error}</span>
+          <button onClick={() => setError(null)} style={{ background: "none", border: "none", color: "#dc2626", cursor: "pointer", fontWeight: 700 }}>✕</button>
+        </div>
+      )}
+
+      <div style={{ maxWidth: 1200, margin: "0 auto", padding: "28px 32px" }}>
+
+        {/* ──── KNOWLEDGE BASE ──── */}
+        {activeTab === "knowledge" && (
+          <div>
+            <h2 style={{ fontSize: 20, fontWeight: 700, color: "#0f172a", margin: "0 0 4px" }}>Knowledge Base</h2>
+            <p style={{ fontSize: 13, color: "#64748b", margin: "0 0 24px" }}>L4 process maps are analyzed by Claude Haiku on upload. S/4HANA reference material is pre-indexed for gap detection.</p>
+            <div style={{ display: "flex", gap: 20 }}>
+              <UploadZone title="L4 Process Maps" description="Upload screenshots or PDFs — AI extracts steps & classifies workstream" icon="🔄" files={l4Files} onUpload={handleL4Upload} loading={l4Loading || analyzing}
+                columns={[{ render: f => f.workstream }, { render: f => `${f.steps} steps` }]} />
+              <UploadZone title="S/4HANA Reference" description="Module guides and release notes — pre-loaded for demo" icon="📐" files={s4Files} onUpload={handleS4Upload} loading={s4Loading}
+                columns={[{ render: f => f.module }, { render: f => `${f.chunks} chunks` }]} />
+            </div>
+            <div style={{ marginTop: 24, background: "#fff", borderRadius: 12, border: "1px solid #e2e8f0", padding: 20 }}>
+              <div style={{ fontSize: 14, fontWeight: 600, color: "#0f172a", marginBottom: 14 }}>Workstream Coverage</div>
+              <div style={{ display: "flex", gap: 12 }}>
+                {wsCoverage.map(w => (
+                  <div key={w.ws} style={{ flex: 1, padding: "14px 16px", borderRadius: 10, textAlign: "center",
+                    background: w.status === "Ready" ? "#f0fdf4" : w.status === "Partial" ? "#fffbeb" : "#f8fafc",
+                    border: `1px solid ${w.status === "Ready" ? "#bbf7d0" : w.status === "Partial" ? "#fde68a" : "#e2e8f0"}` }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: "#334155" }}>{w.ws}</div>
+                    <div style={{ fontSize: 10, color: "#94a3b8", marginTop: 4 }}>{w.l4s} L4s · {w.s4Docs} S/4 docs</div>
+                    <div style={{ fontSize: 10, fontWeight: 600, marginTop: 6, padding: "2px 8px", borderRadius: 10, display: "inline-block",
+                      color: w.status === "Ready" ? "#16a34a" : w.status === "Partial" ? "#d97706" : "#94a3b8",
+                      background: w.status === "Ready" ? "#dcfce7" : w.status === "Partial" ? "#fef3c7" : "#f1f5f9" }}>{w.status}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ──── GAP ANALYSIS ──── */}
+        {activeTab === "analysis" && (
+          <div>
+            {/* Flow Selector */}
+            <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
+              {processFlows.map(f => {
+                const issues = f.steps.filter(s => s.status !== "covered").length;
+                return (
+                  <button key={f.id} onClick={() => { setActiveFlow(f.id); setSelected(null); }} style={{
+                    padding: "10px 18px", fontSize: 12, fontWeight: 600, borderRadius: 10, cursor: "pointer",
+                    background: activeFlow === f.id ? "#4f46e5" : "#fff",
+                    color: activeFlow === f.id ? "#fff" : "#334155",
+                    border: `1px solid ${activeFlow === f.id ? "#4f46e5" : "#e2e8f0"}`,
+                    display: "flex", alignItems: "center", gap: 8,
+                  }}>
+                    <span>{f.workstream}: {f.name}</span>
+                    {issues > 0 && (
+                      <span style={{ fontSize: 10, padding: "1px 6px", borderRadius: 8, background: activeFlow === f.id ? "rgba(255,255,255,0.2)" : "#fef2f2", color: activeFlow === f.id ? "#fff" : "#dc2626", fontWeight: 700 }}>{issues}</span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
+            {currentFlow && (<>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24 }}>
+                <div>
+                  <h2 style={{ fontSize: 20, fontWeight: 700, color: "#0f172a", margin: "0 0 4px" }}>{currentFlow.workstream}: {currentFlow.name}</h2>
+                  <p style={{ fontSize: 13, color: "#64748b", margin: 0 }}>L4 Gap Analysis · {currentFlow.steps.length} steps · Source: {currentFlow.fileName}</p>
+                </div>
+                <div style={{ display: "flex", gap: 12 }}>
+                  {Object.entries(statusConfig).map(([key, cfg]) => (
+                    <div key={key} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      <div style={{ width: 8, height: 8, borderRadius: "50%", background: cfg.color }} />
+                      <span style={{ fontSize: 11, color: "#94a3b8" }}>{cfg.label}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Summary */}
+              <div style={{ display: "flex", gap: 14, marginBottom: 28 }}>
+                {Object.entries(statusConfig).map(([key, cfg]) => (
+                  <div key={key} style={{ background: cfg.bg, border: `1px solid ${cfg.border}`, borderRadius: 12, padding: "18px 22px", flex: 1 }}>
+                    <div style={{ fontSize: 30, fontWeight: 700, color: cfg.color }}>{currentFlow.steps.filter(s => s.status === key).length}</div>
+                    <div style={{ fontSize: 13, color: cfg.color, fontWeight: 500, marginTop: 2 }}>{cfg.label}</div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Flow */}
+              <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #e2e8f0", padding: "24px 20px", marginBottom: 20 }}>
+                <div style={{ fontSize: 10, fontWeight: 600, color: "#94a3b8", letterSpacing: 1, marginBottom: 16, textTransform: "uppercase" }}>Process Flow — click to inspect</div>
+                <div style={{ display: "flex", alignItems: "center", overflowX: "auto", paddingBottom: 8 }}>
+                  {currentFlow.steps.map((step, i) => (
+                    <div key={step.id} style={{ display: "flex", alignItems: "center" }}>
+                      <FlowNode step={step} isSelected={selected === step.id} onClick={() => setSelected(selected === step.id ? null : step.id)} />
+                      {i < currentFlow.steps.length - 1 && <FlowArrow />}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Detail */}
+              {selectedStep ? (() => {
+                const cfg = statusConfig[selectedStep.status] || statusConfig.covered;
+                return (
+                  <div style={{ background: "#fff", borderRadius: 12, border: `1px solid ${cfg.border}`, overflow: "hidden", boxShadow: `0 0 0 3px ${cfg.color}11` }}>
+                    <div style={{ padding: "16px 24px", borderBottom: `1px solid ${cfg.border}`, background: cfg.bg, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                        <div style={{ width: 32, height: 32, borderRadius: 10, background: "#fff", border: `2px solid ${cfg.color}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 700, color: cfg.color }}>{selectedStep.id}</div>
+                        <div>
+                          <div style={{ fontSize: 15, fontWeight: 600, color: "#0f172a" }}>{selectedStep.name}</div>
+                          <div style={{ fontSize: 11, color: "#64748b" }}>S/4 Module: {selectedStep.s4Module || "—"}</div>
+                        </div>
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        {selectedStep.verified === false && <span style={{ fontSize: 10, fontWeight: 600, padding: "3px 10px", borderRadius: 10, background: "#fffbeb", color: "#d97706", border: "1px solid #fde68a" }}>⚠ UNVERIFIED</span>}
+                        {selectedStep.verified === true && <span style={{ fontSize: 10, fontWeight: 600, padding: "3px 10px", borderRadius: 10, background: "#f0fdf4", color: "#16a34a", border: "1px solid #bbf7d0" }}>✓ VERIFIED</span>}
+                        <span style={{ fontSize: 12, fontWeight: 600, padding: "4px 14px", borderRadius: 20, background: "#fff", color: cfg.color, border: `1px solid ${cfg.border}` }}>{cfg.label}</span>
+                      </div>
+                    </div>
+                    <div style={{ padding: "20px 24px" }}>
+                      <p style={{ fontSize: 13, color: "#475569", lineHeight: 1.8, margin: "0 0 12px" }}>{selectedStep.detail || selectedStep.description}</p>
+                      <EditableStep step={selectedStep} onUpdate={(s) => handleStepUpdate(currentFlow.id, s)} />
+                      {selectedStep.crossRef && (
+                        <div style={{ display: "flex", gap: 12, alignItems: "center", padding: "12px 16px", background: "#f5f3ff", borderRadius: 10, border: "1px solid #ddd6fe", marginTop: 12 }}>
+                          <span style={{ fontSize: 18 }}>↗</span>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontSize: 12, fontWeight: 600, color: "#7c3aed" }}>Cross-Boundary Dependency</div>
+                            <div style={{ fontSize: 12, color: "#6d28d9", marginTop: 2 }}>{selectedStep.crossRef}</div>
+                          </div>
+                          <span style={{ fontSize: 10, fontWeight: 700, padding: "3px 10px", borderRadius: 10,
+                            background: selectedStep.severity === "high" ? "#fef2f2" : selectedStep.severity === "medium" ? "#fffbeb" : "#f0fdf4",
+                            color: selectedStep.severity === "high" ? "#dc2626" : selectedStep.severity === "medium" ? "#d97706" : "#16a34a" }}>{(selectedStep.severity || "medium").toUpperCase()}</span>
+                        </div>
+                      )}
+                      {selectedStep.resolution && (
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 16px", background: "#fffbeb", borderRadius: 10, border: "1px solid #fde68a", marginTop: 12 }}>
+                          <span style={{ fontSize: 14 }}>⚙</span>
+                          <span style={{ fontSize: 12, fontWeight: 600, color: "#92400e" }}>Resolution:</span>
+                          <span style={{ fontSize: 12, color: "#a16207" }}>{selectedStep.resolution}</span>
+                        </div>
+                      )}
+                      {selectedStep.testCase && (
+                        <div style={{ padding: "12px 16px", background: "#f8fafc", borderRadius: 10, border: "1px solid #e2e8f0", marginTop: 12 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                            <span style={{ fontSize: 11, fontWeight: 700, color: "#4f46e5" }}>{selectedStep.testCase.id}</span>
+                            <span style={{ fontSize: 10, padding: "1px 8px", borderRadius: 8, fontWeight: 600,
+                              background: selectedStep.testCase.priority === "P0" ? "#fef2f2" : selectedStep.testCase.priority === "P1" ? "#fffbeb" : "#f0fdf4",
+                              color: selectedStep.testCase.priority === "P0" ? "#dc2626" : selectedStep.testCase.priority === "P1" ? "#d97706" : "#16a34a" }}>{selectedStep.testCase.priority}</span>
+                          </div>
+                          <div style={{ fontSize: 12, color: "#475569", lineHeight: 1.5 }}>{selectedStep.testCase.text}</div>
+                          <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 6 }}>Teams: {(selectedStep.testCase.teams || []).join(" + ")}</div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })() : (
+                <div style={{ background: "#fff", borderRadius: 12, border: "1px dashed #cbd5e1", padding: "40px 24px", textAlign: "center" }}>
+                  <div style={{ fontSize: 28, marginBottom: 8 }}>👆</div>
+                  <div style={{ fontSize: 14, fontWeight: 500, color: "#64748b" }}>Click a process step above to inspect gap analysis details</div>
+                </div>
+              )}
+            </>)}
+          </div>
+        )}
+
+        {/* ──── TEST CASES ──── */}
+        {activeTab === "tests" && (
+          <div>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24 }}>
+              <div>
+                <h2 style={{ fontSize: 20, fontWeight: 700, color: "#0f172a", margin: "0 0 4px" }}>Cross-Functional Test Cases</h2>
+                <p style={{ fontSize: 13, color: "#64748b", margin: 0 }}>{allTestCases.length} test cases across {processFlows.length} process flows — auto-generated from gap analysis</p>
+              </div>
+              <button style={{ padding: "8px 18px", fontSize: 12, fontWeight: 600, background: "#4f46e5", color: "#fff", border: "none", borderRadius: 8, cursor: "pointer" }}>Export CSV</button>
+            </div>
+            <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #e2e8f0", overflow: "hidden" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "100px 70px 1fr 180px 100px 80px", padding: "12px 24px", background: "#f8fafc", borderBottom: "1px solid #e2e8f0", fontSize: 10, fontWeight: 600, color: "#94a3b8", letterSpacing: 0.5, textTransform: "uppercase" }}>
+                <span>Test ID</span><span>Priority</span><span>Description</span><span>Teams</span><span>Source</span><span>Type</span>
+              </div>
+              {allTestCases.map((tc, i) => {
+                const srcCfg = statusConfig[tc.status] || statusConfig.gap;
+                return (
+                  <div key={`${tc.id}-${i}`} style={{ display: "grid", gridTemplateColumns: "100px 70px 1fr 180px 100px 80px", padding: "14px 24px", borderBottom: i < allTestCases.length - 1 ? "1px solid #f1f5f9" : "none", alignItems: "center" }}>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: "#4f46e5" }}>{tc.id}</span>
+                    <span style={{ fontSize: 10, fontWeight: 700, padding: "3px 10px", borderRadius: 10, display: "inline-block", width: "fit-content",
+                      background: tc.priority === "P0" ? "#fef2f2" : tc.priority === "P1" ? "#fffbeb" : tc.priority === "P2" ? "#f0fdf4" : "#f8fafc",
+                      color: tc.priority === "P0" ? "#dc2626" : tc.priority === "P1" ? "#d97706" : tc.priority === "P2" ? "#16a34a" : "#94a3b8" }}>{tc.priority}</span>
+                    <span style={{ fontSize: 13, color: "#334155" }}>{tc.text}</span>
+                    <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                      {(tc.teams || []).map(t => <span key={t} style={{ fontSize: 10, padding: "2px 8px", background: "#f1f5f9", borderRadius: 6, color: "#64748b", fontWeight: 500 }}>{t}</span>)}
+                    </div>
+                    <span style={{ fontSize: 10, color: "#64748b" }}>{tc.workstream}</span>
+                    <span style={{ fontSize: 10, fontWeight: 600, color: srcCfg.color }}>{srcCfg.label}</span>
+                  </div>
+                );
+              })}
+            </div>
+            <div style={{ marginTop: 20, padding: "20px 24px", background: "#eef2ff", borderRadius: 12, border: "1px solid #c7d2fe", display: "flex", gap: 16, alignItems: "flex-start" }}>
+              <span style={{ fontSize: 24 }}>🎯</span>
+              <div>
+                <div style={{ fontSize: 14, fontWeight: 600, color: "#3730a3", marginBottom: 4 }}>DIL Integration</div>
+                <div style={{ fontSize: 13, color: "#4338ca", lineHeight: 1.6 }}>These cross-functional test cases map directly to Day-in-the-Life (DIL) testing scenarios. Each test requires multiple workstream teams present simultaneously — the exact coordination gap that causes go-live failures when teams test in isolation. ProcessLens automates the diagnostic that was previously done manually across 25-person cross-functional teams.</div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>

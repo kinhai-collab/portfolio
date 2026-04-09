@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SOPGen — GxP SOP Generator</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'DM Sans', 'Helvetica Neue', sans-serif; background: #f1f5f9; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+const { useState, useCallback } = React;
+
+// ─── CONFIG ───
+const CHANGE_TYPES = {
+  system: { label: "System Change", color: "#7c3aed", bg: "#f5f3ff" },
+  process: { label: "Process Change", color: "#dc2626", bg: "#fef2f2" },
+  terminology: { label: "Terminology", color: "#0891b2", bg: "#ecfeff" },
+  safety: { label: "Safety Change", color: "#ea580c", bg: "#fff7ed" },
+  regulatory: { label: "Regulatory", color: "#4f46e5", bg: "#eef2ff" },
+  cosmetic: { label: "Cosmetic", color: "#6b7280", bg: "#f9fafb" },
+};
+
+const CHANGE_CLASS = {
+  administrative: { label: "Administrative", color: "#6b7280", desc: "Typo, formatting — no process impact" },
+  minor: { label: "Minor", color: "#d97706", desc: "Clarification — no revalidation needed" },
+  major: { label: "Major", color: "#dc2626", desc: "Process change — requires validation & training" },
+};
+
+const STATUS_CONFIG = {
+  draft: { label: "Draft", color: "#6b7280", bg: "#f9fafb" },
+  "sme-review": { label: "SME Review", color: "#d97706", bg: "#fffbeb" },
+  "po-approval": { label: "PO Approval", color: "#4f46e5", bg: "#eef2ff" },
+  approved: { label: "Approved", color: "#16a34a", bg: "#f0fdf4" },
+};
+
+// ─── SOP DATA ───
+const ALL_SOPS = [
+  {
+    docId: "SOP-EWM-INB-001", revision: "2.0", priorRevision: "1.3", effectiveDate: "2026-03-15", nextReviewDate: "2027-03-15",
+    title: "Inbound Receiving — Truck Unload to Putaway", workstream: "EWM", status: "approved", changeClassification: "major",
+    purpose: "To define the standardized procedure for receiving inbound shipments at Distribution Center dock doors, performing goods receipt verification, executing DSCSA serialization compliance checks, and completing putaway to designated storage bins within SAP Extended Warehouse Management (EWM).",
+    scope: "This SOP applies to all warehouse associates, receiving leads, and quality inspection personnel involved in inbound receiving operations at all Genentech Distribution Centers operating on SAP S/4HANA with EWM.",
+    responsibilities: [
+      { role: "Receiving Associate", duties: "Execute truck unloading, RF scanning, physical inspection, and putaway per this SOP" },
+      { role: "Receiving Lead", duties: "Supervise dock operations, manage dock door assignments, escalate exceptions" },
+      { role: "QA Inspector", duties: "Perform GxP quality inspection hold decisions, lot-level verification" },
+      { role: "Warehouse Manager", duties: "Ensure SOP compliance, manage staffing, authorize overtime" },
+      { role: "Compliance Officer", duties: "Verify DSCSA serialization compliance, manage exception resolution" },
+    ],
+    equipment: ["RF handheld scanner (Zebra MC9300)", "Powered pallet jack (Toyota 8HBW)", "DSCSA barcode verification terminal", "PPE: Steel-toe boots, high-vis vest, cut-resistant gloves", "SAP EWM mobile transaction access"],
+    safety: ["All personnel must wear required PPE in dock area", "Max pallet stack height: 2 pallets without racking", "Cold chain items to temperature-controlled storage within 30 min", "Powered equipment operators must hold current certification", "Report damaged/leaking containers immediately"],
+    procedures: [
+      { id: 1, step: "Truck Check-In & Dock Assignment", description: "Verify truck appointment in EWM Yard Management. Assign dock door based on shipment type (ambient/cold chain/hazmat). Log driver credentials and seal numbers in SAP.", regulatoryRef: "21 CFR 211.142", changeType: "system", isNew: false },
+      { id: 2, step: "Seal Verification & Door Open", description: "Inspect trailer seal integrity. Compare seal number against ASN. Document any seal discrepancies in EWM exception log before opening. Photograph damaged seals.", regulatoryRef: "21 CFR 211.80", changeType: null, isNew: false },
+      { id: 3, step: "Unload & Physical Inspection", description: "Unload pallets using powered pallet jack. Perform visual inspection for damage, temperature indicator status (cold chain), and count verification against ASN. Stage on receiving floor.", regulatoryRef: "21 CFR 211.82", changeType: "terminology", isNew: false },
+      { id: 4, step: "RF Scan — Goods Receipt in EWM", description: "Using RF handheld scanner, scan each Handling Unit barcode. System performs automatic ASN matching and creates Goods Receipt document in EWM. Resolve any scan mismatches before proceeding.", regulatoryRef: "21 CFR 211.68", changeType: "system", isNew: true },
+      { id: 5, step: "DSCSA Serialization Verification", description: "For pharmaceutical products: scan 2D DataMatrix barcode on each saleable unit. Verify GTIN, serial number, lot, and expiration against DSCSA database via Verification Router Service. Quarantine any units failing verification.", regulatoryRef: "DSCSA §582(b)", changeType: "regulatory", isNew: true },
+      { id: 6, step: "Quality Inspection Hold Decision", description: "QA Inspector reviews lot-level inspection requirements. Apply QI hold in EWM stock type management for items requiring GxP lot release. Release standard items to available stock.", regulatoryRef: "21 CFR 211.84", changeType: "process", isNew: false },
+      { id: 7, step: "Putaway Execution", description: "EWM generates putaway task with bin assignment based on storage type/section search strategy. Transport HU to designated bin. Confirm putaway via RF scan at bin location.", regulatoryRef: "21 CFR 211.142", changeType: "system", isNew: false },
+      { id: 8, step: "Goods Receipt Posting Confirmation", description: "Verify EWM goods receipt posting triggered FI goods receipt in Finance. Confirm inventory quantities synchronized between EWM and FI-MM. Escalate any posting discrepancies.", regulatoryRef: "ICH Q10 §3.2", changeType: "process", isNew: true },
+    ],
+    qualityChecks: [
+      { id: 1, checkpoint: "ASN count matches physical count", frequency: "Every shipment", criteria: "Zero variance — discrepancy requires exception documentation", regulatoryRef: "21 CFR 211.82" },
+      { id: 2, checkpoint: "DSCSA serial verification pass rate", frequency: "Every pharma shipment", criteria: "100% — any failure triggers quarantine", regulatoryRef: "DSCSA §582(b)" },
+      { id: 3, checkpoint: "Cold chain temperature within range", frequency: "Every cold chain shipment", criteria: "Product-specific — excursions require QA review in 24h", regulatoryRef: "WHO GDP §9" },
+      { id: 4, checkpoint: "EWM-FI posting reconciliation", frequency: "End of shift", criteria: "Zero orphaned EWM records without FI posting", regulatoryRef: "ICH Q10 §3.2" },
+    ],
+    trainingImpact: [
+      { role: "Receiving Associate", reason: "New RF scanning workflow (Step 4), new DSCSA verification step (Step 5)", required: true },
+      { role: "QA Inspector", reason: "Updated QI hold process in EWM (Step 6)", required: true },
+      { role: "Receiving Lead", reason: "New exception escalation paths for DSCSA failures", required: true },
+      { role: "Warehouse Manager", reason: "Awareness of new FI reconciliation check (Step 8)", required: false },
+    ],
+    diffs: [
+      { step: 4, type: "system", old: "Scan items using legacy WMS handheld. Manual count entry for goods receipt.", new: "RF scan each HU barcode in EWM. Automatic ASN matching and GR document creation.", impact: "Eliminates manual count entry. Requires RF scanner training." },
+      { step: 5, type: "regulatory", old: "No equivalent step in prior SOP.", new: "DSCSA serialization verification via 2D DataMatrix scan and VRS lookup.", impact: "NEW STEP — federal compliance requirement." },
+      { step: 7, type: "system", old: "Putaway using paper pick list with manually assigned bin locations.", new: "EWM generates putaway task with system-determined bin assignment. RF confirm at bin.", impact: "Eliminates paper-based putaway." },
+      { step: 8, type: "process", old: "No FI reconciliation step existed.", new: "Verify EWM GR posting triggered FI goods receipt. Confirm inventory sync.", impact: "NEW STEP — closes cross-functional gap." },
+      { step: 1, type: "system", old: "Truck check-in via paper log and manual dock assignment.", new: "Verify truck appointment in EWM Yard Management. System-assigned dock door.", impact: "Paper to digital. Dock assignment now system-driven." },
+      { step: 3, type: "terminology", old: "Unload pallets. Check for damage. Count against Bill of Lading.", new: "Unload pallets using powered pallet jack. Visual inspection including temperature indicator. Count against ASN.", impact: "BOL → ASN. Added temperature indicator check." },
+    ],
+    auditTrail: [
+      { timestamp: "2026-03-01 09:14", user: "AI — Claude Haiku", action: "Generated initial SOP draft", detail: "8 steps, 4 quality checks, 5 regulatory cross-references" },
+      { timestamp: "2026-03-01 09:32", user: "AI — Claude Haiku", action: "Differential analysis completed", detail: "Compared against Rev 1.3 — 3 new steps, 4 system changes, 2 regulatory additions" },
+      { timestamp: "2026-03-02 10:15", user: "J. Martinez (SME)", action: "Edited Step 5 description", detail: "Added quarantine clause for failed verification" },
+      { timestamp: "2026-03-02 10:45", user: "J. Martinez (SME)", action: "Submitted for Process Owner review", detail: "SME review complete" },
+      { timestamp: "2026-03-15 08:30", user: "Dr. S. Chen (Process Owner)", action: "APPROVED — SOP finalized", detail: "Effective date: 2026-03-15" },
+    ],
+  },
+  {
+    docId: "SOP-EWM-OUT-001", revision: "2.0", priorRevision: "1.2", effectiveDate: "", nextReviewDate: "2027-05-01",
+    title: "Outbound Shipping — Wave Release to Truck Departure", workstream: "EWM", status: "po-approval", changeClassification: "major",
+    purpose: "To define the standardized procedure for processing outbound shipments from wave creation through pick execution, packing, DSCSA outbound serialization, loading, and truck departure within SAP EWM.",
+    scope: "Applies to all warehouse associates, pick leads, packing station operators, and shipping coordinators at all Genentech DCs operating on SAP S/4HANA with EWM.",
+    responsibilities: [
+      { role: "Pick Associate", duties: "Execute RF-directed picking per wave assignment, confirm picks at bin" },
+      { role: "Pack Station Operator", duties: "Verify picked items, create shipping HUs, apply DSCSA labels" },
+      { role: "Shipping Coordinator", duties: "Assign dock doors, manage carrier appointments, confirm departures" },
+      { role: "Compliance Officer", duties: "Verify outbound DSCSA T3 document generation" },
+    ],
+    equipment: ["RF handheld scanner", "Packing station with scale and label printer", "Powered pallet jack", "PPE: Steel-toe boots, high-vis vest", "SAP EWM mobile + desktop access"],
+    safety: ["Maximum cart load: 50 lbs per tier", "Staging lanes must remain clear of obstructions", "Cold chain items loaded last, closest to trailer door", "Loading dock plates inspected before each trailer"],
+    procedures: [
+      { id: 1, step: "Wave Creation & Release", description: "Shipping Coordinator creates pick wave in EWM based on delivery priority, ship date, and carrier cutoff. Release wave to generate pick tasks for RF assignment.", regulatoryRef: "ISO 9001 §8.5", changeType: "system", isNew: false },
+      { id: 2, step: "RF-Directed Pick Execution", description: "Pick Associate receives task on RF device. System directs to source bin. Scan bin and HU to confirm. Pick quantity and confirm via RF. System routes to next pick.", regulatoryRef: "21 CFR 211.150", changeType: "system", isNew: true },
+      { id: 3, step: "Packing & HU Creation", description: "Pack Station Operator verifies picked items against delivery. Creates shipping Handling Units. Weighs and labels each HU. System validates completeness before closing.", regulatoryRef: "21 CFR 211.150", changeType: null, isNew: false },
+      { id: 4, step: "DSCSA Outbound Serialization", description: "Generate Transaction History (T3) document with complete serial chain for each pharmaceutical item. Verify serial-to-shipment association. System blocks shipment if T3 incomplete.", regulatoryRef: "DSCSA §582(b)", changeType: "regulatory", isNew: true },
+      { id: 5, step: "Staging & Load Sequencing", description: "Stage packed pallets in shipping lane by carrier and delivery sequence. Cold chain items staged in temperature-controlled area until loading.", regulatoryRef: "WHO GDP §9", changeType: null, isNew: false },
+      { id: 6, step: "Loading & Goods Issue", description: "Load trailer per sequence. Confirm loading via RF at dock door. System posts Goods Issue, triggering FI inventory reduction and COGS entry.", regulatoryRef: "21 CFR 211.150", changeType: "system", isNew: false },
+      { id: 7, step: "Delivery Confirmation to SD", description: "EWM confirms delivery completion to SD module. System triggers billing document creation and customer ASN transmission.", regulatoryRef: "ICH Q10 §3.2", changeType: "process", isNew: true },
+    ],
+    qualityChecks: [
+      { id: 1, checkpoint: "Pick accuracy — scanned vs. ordered", frequency: "Every pick task", criteria: "100% match required", regulatoryRef: "21 CFR 211.150" },
+      { id: 2, checkpoint: "DSCSA T3 document completeness", frequency: "Every pharma shipment", criteria: "All serials accounted — shipment blocked if incomplete", regulatoryRef: "DSCSA §582(b)" },
+      { id: 3, checkpoint: "Cold chain loading time compliance", frequency: "Every cold chain load", criteria: "Loaded within 15 min of leaving temp-controlled staging", regulatoryRef: "WHO GDP §9" },
+    ],
+    trainingImpact: [
+      { role: "Pick Associate", reason: "New RF-directed picking workflow (Step 2)", required: true },
+      { role: "Pack Station Operator", reason: "DSCSA T3 generation process (Step 4)", required: true },
+      { role: "Shipping Coordinator", reason: "New SD delivery confirmation step (Step 7)", required: true },
+    ],
+    diffs: [
+      { step: 2, type: "system", old: "Paper pick list with manual bin lookup.", new: "RF-directed picking with system-guided bin sequencing.", impact: "Eliminates paper picks. Requires RF training." },
+      { step: 4, type: "regulatory", old: "No outbound serialization step.", new: "T3 document generation with serial chain verification.", impact: "NEW — DSCSA federal requirement for outbound." },
+      { step: 7, type: "process", old: "Manual email to customer service confirming shipment.", new: "Automated SD delivery confirmation triggering billing.", impact: "NEW — eliminates manual handoff to Commercial." },
+    ],
+    auditTrail: [
+      { timestamp: "2026-04-01 11:00", user: "AI — Claude Haiku", action: "Generated initial SOP draft", detail: "7 steps, 3 quality checks" },
+      { timestamp: "2026-04-02 14:20", user: "R. Thompson (SME)", action: "Edited Step 4 — added system block clause", detail: "If T3 incomplete, shipment cannot proceed" },
+      { timestamp: "2026-04-02 15:00", user: "R. Thompson (SME)", action: "Submitted for Process Owner review", detail: "Awaiting PO approval" },
+    ],
+  },
+  {
+    docId: "SOP-EWM-CYC-001", revision: "2.0", priorRevision: "1.1", effectiveDate: "", nextReviewDate: "2027-06-01",
+    title: "Cycle Count — Physical Inventory Reconciliation", workstream: "EWM", status: "sme-review", changeClassification: "minor",
+    purpose: "To define the standardized procedure for executing cycle counts in SAP EWM, reconciling physical inventory against system records, and resolving variances per GxP documentation requirements.",
+    scope: "Applies to all inventory control associates, warehouse supervisors, and QA personnel responsible for physical inventory accuracy at Genentech Distribution Centers.",
+    responsibilities: [
+      { role: "Inventory Control Associate", duties: "Execute cycle counts per schedule, perform RF-based counting, document variances" },
+      { role: "Warehouse Supervisor", duties: "Approve variance adjustments, escalate out-of-tolerance counts" },
+      { role: "QA Reviewer", duties: "Review variance reports for GxP-regulated SKUs, approve adjustments" },
+    ],
+    equipment: ["RF handheld scanner", "Cycle count schedule printout (backup)", "PPE: Steel-toe boots, high-vis vest", "SAP EWM cycle count transaction access"],
+    safety: ["Use man-up equipment only with current certification for high-rack counts", "Never climb racking — use approved access equipment", "Report any unlabeled or unidentifiable product immediately"],
+    procedures: [
+      { id: 1, step: "Cycle Count Schedule Review", description: "Inventory Control reviews daily cycle count schedule generated by EWM ABC classification. Confirm assigned bins and verify no active putaway/pick tasks in target locations.", regulatoryRef: "21 CFR 211.142", changeType: "system", isNew: false },
+      { id: 2, step: "Physical Count Execution", description: "Navigate to assigned bin. Scan bin barcode via RF. Count all items physically present. Enter quantity per HU in EWM transaction. System compares to booked quantity.", regulatoryRef: "21 CFR 211.68", changeType: "system", isNew: true },
+      { id: 3, step: "Variance Identification", description: "EWM flags any count where physical ≠ system quantity. Associate re-counts flagged bins. If variance persists after recount, document in EWM variance log with root cause hypothesis.", regulatoryRef: "ICH Q7 §10.2", changeType: null, isNew: false },
+      { id: 4, step: "Variance Approval & Adjustment", description: "Warehouse Supervisor reviews variance report. Adjustments within tolerance: Supervisor approves in EWM. GxP-regulated SKU adjustments: QA Reviewer must co-approve before system adjustment posts.", regulatoryRef: "21 CFR 211.84", changeType: "process", isNew: false },
+      { id: 5, step: "Reconciliation Report", description: "End-of-day reconciliation report generated from EWM. Submitted to Warehouse Manager. Tracks count accuracy rate, variance patterns, and root cause distribution.", regulatoryRef: "ICH Q10 §3.2", changeType: null, isNew: false },
+    ],
+    qualityChecks: [
+      { id: 1, checkpoint: "Cycle count accuracy rate", frequency: "Daily", criteria: "≥99.5% accuracy target", regulatoryRef: "21 CFR 211.142" },
+      { id: 2, checkpoint: "GxP SKU variance resolution", frequency: "Per occurrence", criteria: "QA approval required within 48 hours", regulatoryRef: "21 CFR 211.84" },
+    ],
+    trainingImpact: [
+      { role: "Inventory Control Associate", reason: "New RF-based counting workflow (Step 2)", required: true },
+      { role: "Warehouse Supervisor", reason: "Updated variance approval thresholds", required: false },
+    ],
+    diffs: [
+      { step: 2, type: "system", old: "Paper count sheet with manual entry into legacy WMS.", new: "RF scan at bin, count in EWM transaction, real-time comparison.", impact: "Eliminates paper counting. Real-time variance detection." },
+    ],
+    auditTrail: [
+      { timestamp: "2026-04-05 08:30", user: "AI — Claude Haiku", action: "Generated initial SOP draft", detail: "5 steps, 2 quality checks" },
+      { timestamp: "2026-04-05 09:15", user: "AI — Claude Haiku", action: "Differential analysis completed", detail: "1 system change identified" },
+    ],
+  },
+  {
+    docId: "SOP-EWM-RET-001", revision: "1.0", priorRevision: "N/A", effectiveDate: "2026-02-01", nextReviewDate: "2027-02-01",
+    title: "Returns Processing — Receiving to Disposition", workstream: "EWM", status: "approved", changeClassification: "major",
+    purpose: "To define the standardized procedure for receiving returned pharmaceutical products, performing DSCSA verification, executing quality disposition decisions, and processing inventory adjustments in SAP EWM.",
+    scope: "Applies to all returns processing associates, QA inspectors, and compliance officers handling pharmaceutical returns at Genentech Distribution Centers.",
+    responsibilities: [
+      { role: "Returns Associate", duties: "Receive returned items, perform initial inspection, scan into EWM returns process" },
+      { role: "QA Inspector", duties: "Disposition decision — return to stock, quarantine, or destroy" },
+      { role: "Compliance Officer", duties: "DSCSA saleable returns verification via VRS" },
+    ],
+    equipment: ["RF handheld scanner", "Returns inspection workstation", "DSCSA verification terminal", "PPE: Gloves (mandatory for all returns handling)", "SAP EWM returns transaction access"],
+    safety: ["Wear gloves when handling all returns — contamination risk", "Damaged or leaking returns isolated immediately in spill containment area", "Temperature-sensitive returns checked within 15 min of receipt"],
+    procedures: [
+      { id: 1, step: "Returns Receipt & Logging", description: "Receive returned shipment at designated returns dock. Log return authorization number in EWM. Verify customer return documentation against RA.", regulatoryRef: "21 CFR 211.150", changeType: null, isNew: false },
+      { id: 2, step: "DSCSA Saleable Returns Verification", description: "For pharmaceutical products being considered for return to saleable stock: scan 2D DataMatrix and query VRS to verify product authenticity. Products failing verification are quarantined immediately.", regulatoryRef: "DSCSA §582(c)", changeType: "regulatory", isNew: true },
+      { id: 3, step: "Physical Inspection & Condition Assessment", description: "Inspect returned items for damage, tampering, temperature excursion indicators, and expiration dating. Document condition in EWM returns inspection record.", regulatoryRef: "21 CFR 211.84", changeType: null, isNew: false },
+      { id: 4, step: "QA Disposition Decision", description: "QA Inspector reviews inspection record and DSCSA verification results. Disposition options: Return to Available Stock, Quarantine for Further Investigation, Destroy. Decision recorded in EWM with QA electronic signature.", regulatoryRef: "21 CFR 211.84", changeType: "process", isNew: false },
+      { id: 5, step: "Inventory Adjustment & Documentation", description: "Based on disposition: restock items posted back to available inventory, destroyed items posted as inventory write-off with batch record. All adjustments require supervisor co-approval.", regulatoryRef: "ICH Q10 §3.2", changeType: "system", isNew: false },
+    ],
+    qualityChecks: [
+      { id: 1, checkpoint: "DSCSA verification for saleable returns", frequency: "Every pharmaceutical return", criteria: "100% verification required — failures quarantined", regulatoryRef: "DSCSA §582(c)" },
+      { id: 2, checkpoint: "Disposition decision documented with e-signature", frequency: "Every return", criteria: "QA signature required before inventory adjustment", regulatoryRef: "21 CFR 211.84" },
+    ],
+    trainingImpact: [
+      { role: "Returns Associate", reason: "New DSCSA saleable returns verification workflow (Step 2)", required: true },
+      { role: "QA Inspector", reason: "Updated disposition workflow with EWM electronic signature (Step 4)", required: true },
+    ],
+    diffs: [
+      { step: 2, type: "regulatory", old: "No serialization verification for returns.", new: "DSCSA VRS verification mandatory for all saleable returns.", impact: "NEW — federal requirement effective 2025." },
+    ],
+    auditTrail: [
+      { timestamp: "2026-01-10 10:00", user: "AI — Claude Haiku", action: "Generated initial SOP draft", detail: "5 steps, 2 quality checks" },
+      { timestamp: "2026-01-12 09:30", user: "M. Davis (SME)", action: "Full review — 3 edits", detail: "Added glove requirement, clarified VRS query step" },
+      { timestamp: "2026-01-12 11:00", user: "M. Davis (SME)", action: "Submitted for Process Owner review", detail: "SME complete" },
+      { timestamp: "2026-02-01 08:00", user: "Dr. S. Chen (Process Owner)", action: "APPROVED — SOP finalized", detail: "Effective date: 2026-02-01" },
+    ],
+  },
+  {
+    docId: "SOP-PLN-MRP-001", revision: "2.0", priorRevision: "1.0", effectiveDate: "2026-03-01", nextReviewDate: "2027-03-01",
+    title: "MRP Run — Demand Consumption to Purchase Requisition", workstream: "Plan", status: "approved", changeClassification: "minor",
+    purpose: "To define the standardized procedure for executing Material Requirements Planning (MRP) runs in SAP S/4HANA, reviewing planning results, converting planned orders, and releasing purchase requisitions to Procurement.",
+    scope: "Applies to all production planners and supply chain analysts responsible for MRP execution at Genentech manufacturing and distribution sites.",
+    responsibilities: [
+      { role: "Production Planner", duties: "Execute MRP runs, review planning results, convert planned orders" },
+      { role: "Supply Chain Analyst", duties: "Validate demand forecasts consumed by MRP, review exception messages" },
+      { role: "Procurement Lead", duties: "Review and action MRP-generated purchase requisitions" },
+    ],
+    equipment: ["SAP S/4HANA PP-MRP transaction access", "Planning workstation with dual monitors", "Exception message dashboard access"],
+    safety: ["N/A — office-based procedure"],
+    procedures: [
+      { id: 1, step: "Demand Forecast Validation", description: "Supply Chain Analyst reviews Planned Independent Requirements consumed against incoming sales orders. Validate forecast accuracy ≥80% MAPE threshold before MRP run.", regulatoryRef: "ICH Q7 §7.2", changeType: null, isNew: false },
+      { id: 2, step: "MRP Run Execution", description: "Production Planner initiates MRP run in S/4HANA (transaction MD01/MD02). Select planning scope: single material, plant-wide, or cross-plant. Monitor run completion and review log for errors.", regulatoryRef: "ISO 9001 §8.5", changeType: "system", isNew: false },
+      { id: 3, step: "Exception Message Review", description: "Review MRP exception messages: reschedule-in, reschedule-out, cancel, and new order recommendations. Prioritize by impact to production schedule. Document decisions for each exception.", regulatoryRef: "ICH Q10 §3.2", changeType: null, isNew: false },
+      { id: 4, step: "Planned Order Conversion", description: "Convert approved planned orders to production orders (in-house manufacturing) or purchase requisitions (external procurement). Verify lead times and delivery dates align with production schedule.", regulatoryRef: "ISO 9001 §8.5", changeType: "process", isNew: false },
+      { id: 5, step: "Purchase Requisition Release to Procurement", description: "Release MRP-generated purchase requisitions to Procurement Lead. Include critical-path flags for items with less than 2-week lead time buffer. Confirm receipt acknowledgment from Procurement.", regulatoryRef: "ICH Q7 §7.2", changeType: "process", isNew: true },
+      { id: 6, step: "Planning Results Documentation", description: "Document MRP run summary: materials planned, exceptions actioned, requisitions released, and any manual overrides. Submit to Supply Chain Manager for weekly planning review.", regulatoryRef: "ICH Q10 §3.2", changeType: null, isNew: false },
+    ],
+    qualityChecks: [
+      { id: 1, checkpoint: "Forecast accuracy vs. MAPE threshold", frequency: "Pre-MRP run", criteria: "≥80% accuracy — below threshold requires manager review", regulatoryRef: "ICH Q10 §3.2" },
+      { id: 2, checkpoint: "Exception messages actioned", frequency: "Post-MRP run", criteria: "100% of exceptions reviewed and documented within 24h", regulatoryRef: "ISO 9001 §8.5" },
+      { id: 3, checkpoint: "Procurement acknowledgment of requisitions", frequency: "Within 48h of release", criteria: "All critical-path items acknowledged", regulatoryRef: "ICH Q7 §7.2" },
+    ],
+    trainingImpact: [
+      { role: "Production Planner", reason: "New PR release workflow with critical-path flagging (Step 5)", required: true },
+      { role: "Procurement Lead", reason: "New acknowledgment requirement for MRP requisitions", required: false },
+    ],
+    diffs: [
+      { step: 5, type: "process", old: "Requisitions released to Procurement without formal handoff.", new: "Structured release with critical-path flagging and receipt acknowledgment.", impact: "NEW — closes Planning-to-Procurement handoff gap." },
+    ],
+    auditTrail: [
+      { timestamp: "2026-02-10 09:00", user: "AI — Claude Haiku", action: "Generated initial SOP draft", detail: "6 steps, 3 quality checks" },
+      { timestamp: "2026-02-12 14:00", user: "K. Park (SME)", action: "Added critical-path flagging to Step 5", detail: "Items with <2 week lead time buffer flagged" },
+      { timestamp: "2026-02-12 15:30", user: "K. Park (SME)", action: "Submitted for Process Owner review", detail: "SME complete" },
+      { timestamp: "2026-03-01 09:00", user: "Dr. L. Wang (Process Owner)", action: "APPROVED — SOP finalized", detail: "Effective date: 2026-03-01" },
+    ],
+  },
+];
+
+// ─── COMPONENTS ───
+function Badge({ label, color, bg }) {
+  return <span style={{ fontSize: 10, fontWeight: 600, padding: "3px 10px", borderRadius: 10, background: bg || `${color}15`, color, border: `1px solid ${color}30`, whiteSpace: "nowrap" }}>{label}</span>;
+}
+
+function Card({ children, style }) {
+  return <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #e2e8f0", padding: 20, marginBottom: 16, ...style }}>{children}</div>;
+}
+
+function SectionHeader({ title, count }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+      <div style={{ fontSize: 15, fontWeight: 700, color: "#0f172a" }}>{title}</div>
+      {count !== undefined && <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 8px", background: "#f1f5f9", borderRadius: 8, color: "#64748b" }}>{count}</span>}
+    </div>
+  );
+}
+
+// ─── MAIN APP ───
+function App() {
+  const [view, setView] = useState("library"); // library | generate | detail
+  const [activeTab, setActiveTab] = useState("review");
+  const [activeSopId, setActiveSopId] = useState(null);
+  const [sops, setSops] = useState(ALL_SOPS);
+  const [editingStep, setEditingStep] = useState(null);
+  const [editText, setEditText] = useState("");
+  const [generating, setGenerating] = useState(false);
+  const [formData, setFormData] = useState({ processName: "", workstream: "EWM", steps: "", safety: "", regulatory: "GxP, DSCSA", system: "SAP EWM" });
+
+  const sop = sops.find(s => s.docId === activeSopId);
+  const statusCfg = sop ? STATUS_CONFIG[sop.status] : null;
+
+  const openSop = (docId) => { setActiveSopId(docId); setView("detail"); setActiveTab("review"); setEditingStep(null); };
+  const goToLibrary = () => { setView("library"); setActiveSopId(null); };
+  const goToGenerate = () => { setView("generate"); setActiveSopId(null); };
+
+  const handleGenerate = useCallback(async () => {
+    if (!formData.processName.trim()) return;
+    setGenerating(true);
+    await new Promise(r => setTimeout(r, 2500));
+    const stepLines = formData.steps.split("\n").filter(l => l.trim());
+    const newDocId = `SOP-${formData.workstream}-${String(sops.length + 1).padStart(3, "0")}`;
+    const newSop = {
+      docId: newDocId, revision: "1.0", priorRevision: "N/A", effectiveDate: "", nextReviewDate: new Date(Date.now() + 365*24*60*60*1000).toISOString().split("T")[0],
+      title: formData.processName, workstream: formData.workstream, status: "draft", changeClassification: "major",
+      purpose: `To define the standardized procedure for ${formData.processName.toLowerCase()} within ${formData.system}, ensuring compliance with ${formData.regulatory} requirements.`,
+      scope: `Applies to all personnel involved in ${formData.processName.toLowerCase()} operations at Genentech Distribution Centers operating on ${formData.system}.`,
+      responsibilities: [
+        { role: "Warehouse Associate", duties: `Execute ${formData.processName.toLowerCase()} per this SOP` },
+        { role: "Supervisor", duties: "Ensure SOP compliance, manage escalations" },
+        { role: "QA Inspector", duties: "Perform quality hold decisions as required" },
+      ],
+      equipment: ["RF handheld scanner", "PPE: Steel-toe boots, high-vis vest", `${formData.system} transaction access`],
+      safety: formData.safety ? formData.safety.split("\n").filter(l => l.trim()) : ["All personnel must wear required PPE"],
+      procedures: stepLines.length > 0 ? stepLines.map((line, i) => ({
+        id: i + 1, step: line.trim(), description: `[AI-generated description pending SME review] Execute ${line.trim().toLowerCase()} per ${formData.system} standard workflow. Verify completion before proceeding.`,
+        regulatoryRef: formData.regulatory.split(",")[0]?.trim() || "GxP", changeType: null, isNew: true,
+      })) : [{ id: 1, step: "Step 1 — Pending Definition", description: "Process steps to be defined by SME.", regulatoryRef: "GxP", changeType: null, isNew: true }],
+      qualityChecks: [{ id: 1, checkpoint: "Process completion verification", frequency: "Per execution", criteria: "100% compliance with procedural steps", regulatoryRef: formData.regulatory.split(",")[0]?.trim() || "GxP" }],
+      trainingImpact: [{ role: "Warehouse Associate", reason: "New SOP — initial training required", required: true }],
+      diffs: [],
+      auditTrail: [{ timestamp: new Date().toISOString().replace("T", " ").slice(0, 16), user: "AI — Claude Haiku", action: "Generated initial SOP draft", detail: `${stepLines.length || 1} steps, 1 quality check. Regulatory context: ${formData.regulatory}` }],
+    };
+    setSops(prev => [newSop, ...prev]);
+    setGenerating(false);
+    setFormData({ processName: "", workstream: "EWM", steps: "", safety: "", regulatory: "GxP, DSCSA", system: "SAP EWM" });
+    openSop(newDocId);
+  }, [formData, sops.length]);
+
+  const updateSop = useCallback((docId, updater) => {
+    setSops(prev => prev.map(s => s.docId === docId ? updater(s) : s));
+  }, []);
+
+  const addAudit = useCallback((docId, user, action, detail) => {
+    updateSop(docId, s => ({ ...s, auditTrail: [...s.auditTrail, { timestamp: new Date().toISOString().replace("T", " ").slice(0, 16), user, action, detail }] }));
+  }, [updateSop]);
+
+  const handleEdit = (stepId, newText) => {
+    updateSop(activeSopId, s => ({ ...s, procedures: s.procedures.map(p => p.id === stepId ? { ...p, description: newText } : p) }));
+    addAudit(activeSopId, "J. Martinez (SME)", `Edited Step ${stepId}`, "Updated procedural text");
+    setEditingStep(null);
+  };
+
+  const handleSubmitPO = () => { updateSop(activeSopId, s => ({ ...s, status: "po-approval" })); addAudit(activeSopId, "J. Martinez (SME)", "Submitted for Process Owner review", "SME review complete"); };
+  const handleApprove = () => { const d = new Date().toISOString().split("T")[0]; updateSop(activeSopId, s => ({ ...s, status: "approved", effectiveDate: d })); addAudit(activeSopId, "Dr. S. Chen (Process Owner)", "APPROVED — SOP finalized", `Effective: ${d}`); };
+  const handleReject = () => { updateSop(activeSopId, s => ({ ...s, status: "sme-review" })); addAudit(activeSopId, "Dr. S. Chen (Process Owner)", "RETURNED to SME", "Requested revisions"); };
+
+  const tabs = [{ id: "review", label: "Document" }, { id: "compare", label: "Compare" }, { id: "audit", label: "Audit Trail" }];
+
+  return (
+    <div style={{ fontFamily: "'DM Sans', 'Helvetica Neue', sans-serif", background: "#f1f5f9", minHeight: "100vh" }}>
+      <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+      {/* Top Bar */}
+      <div style={{ background: "#fff", borderBottom: "1px solid #e2e8f0", padding: "14px 32px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }} onClick={goToLibrary}>
+          <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><rect width="28" height="28" rx="7" fill="#0f766e"/><path d="M9 9h10M9 14h7M9 19h10" stroke="#fff" strokeWidth="2" strokeLinecap="round"/></svg>
+          <span style={{ fontSize: 16, fontWeight: 700, color: "#0f172a" }}>SOPGen</span>
+          <span style={{ fontSize: 11, color: "#94a3b8", marginLeft: 4 }}>GxP SOP Generator</span>
+        </div>
+        {view === "detail" && (
+          <div style={{ display: "flex", gap: 4 }}>
+            {tabs.map(tab => (
+              <button key={tab.id} onClick={() => setActiveTab(tab.id)} style={{
+                padding: "6px 16px", fontSize: 12, fontWeight: 600,
+                background: activeTab === tab.id ? "#0f766e" : "transparent",
+                color: activeTab === tab.id ? "#fff" : "#64748b",
+                border: "none", borderRadius: 8, cursor: "pointer",
+              }}>{tab.label}{tab.id === "audit" && sop && <span style={{ marginLeft: 6, fontSize: 10, padding: "1px 6px", background: activeTab === tab.id ? "rgba(255,255,255,0.2)" : "#e2e8f0", borderRadius: 8 }}>{sop.auditTrail.length}</span>}</button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div style={{ maxWidth: 1100, margin: "0 auto", padding: "28px 32px" }}>
+
+        {/* ──── LIBRARY VIEW ──── */}
+        {view === "library" && (
+          <div>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24 }}>
+              <div>
+                <h2 style={{ fontSize: 22, fontWeight: 700, color: "#0f172a", margin: "0 0 4px" }}>SOP Library</h2>
+                <p style={{ fontSize: 13, color: "#64748b", margin: 0 }}>{sops.length} documents · {sops.filter(s => s.status === "approved").length} approved · {sops.filter(s => s.status !== "approved").length} in progress</p>
+              </div>
+              <button onClick={goToGenerate} style={{ padding: "10px 20px", fontSize: 13, fontWeight: 600, background: "#0f766e", color: "#fff", border: "none", borderRadius: 10, cursor: "pointer" }}>+ Generate New SOP</button>
+            </div>
+
+            {/* Summary Cards */}
+            <div style={{ display: "flex", gap: 14, marginBottom: 24 }}>
+              {Object.entries(STATUS_CONFIG).map(([key, cfg]) => {
+                const count = sops.filter(s => s.status === key).length;
+                return (
+                  <div key={key} style={{ flex: 1, background: cfg.bg, border: `1px solid ${cfg.color}30`, borderRadius: 12, padding: "16px 20px" }}>
+                    <div style={{ fontSize: 28, fontWeight: 700, color: cfg.color }}>{count}</div>
+                    <div style={{ fontSize: 12, fontWeight: 500, color: cfg.color }}>{cfg.label}</div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* SOP Table */}
+            <Card style={{ padding: 0, overflow: "hidden" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "140px 1fr 80px 60px 100px 100px 110px 100px", padding: "12px 20px", background: "#f8fafc", borderBottom: "1px solid #e2e8f0", fontSize: 10, fontWeight: 600, color: "#94a3b8", letterSpacing: 0.5, textTransform: "uppercase" }}>
+                <span>Doc ID</span><span>Title</span><span>Stream</span><span>Rev</span><span>Status</span><span>Classification</span><span>Effective</span><span>Next Review</span>
+              </div>
+              {sops.map((s, i) => {
+                const sc = STATUS_CONFIG[s.status];
+                const cc = CHANGE_CLASS[s.changeClassification];
+                return (
+                  <div key={s.docId} onClick={() => openSop(s.docId)} style={{
+                    display: "grid", gridTemplateColumns: "140px 1fr 80px 60px 100px 100px 110px 100px",
+                    padding: "14px 20px", borderBottom: i < sops.length - 1 ? "1px solid #f1f5f9" : "none",
+                    cursor: "pointer", alignItems: "center", transition: "background 0.1s",
+                  }} onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"} onMouseLeave={e => e.currentTarget.style.background = "#fff"}>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: "#0f766e" }}>{s.docId}</span>
+                    <span style={{ fontSize: 13, fontWeight: 500, color: "#0f172a" }}>{s.title}</span>
+                    <span style={{ fontSize: 11, color: "#64748b" }}>{s.workstream}</span>
+                    <span style={{ fontSize: 12, color: "#334155" }}>{s.revision}</span>
+                    <Badge label={sc.label} color={sc.color} bg={sc.bg} />
+                    <Badge label={cc.label} color={cc.color} />
+                    <span style={{ fontSize: 11, color: s.effectiveDate ? "#334155" : "#94a3b8" }}>{s.effectiveDate || "Pending"}</span>
+                    <span style={{ fontSize: 11, color: "#64748b" }}>{s.nextReviewDate}</span>
+                  </div>
+                );
+              })}
+            </Card>
+          </div>
+        )}
+
+        {/* ──── DETAIL VIEW ──── */}
+
+        {/* ──── GENERATE VIEW ──── */}
+        {view === "generate" && (
+          <div>
+            <div style={{ marginBottom: 16, display: "flex", alignItems: "center", gap: 6 }}>
+              <button onClick={goToLibrary} style={{ fontSize: 12, color: "#0f766e", background: "none", border: "none", cursor: "pointer", fontWeight: 600 }}>← SOP Library</button>
+              <span style={{ fontSize: 12, color: "#cbd5e1" }}>/</span>
+              <span style={{ fontSize: 12, color: "#64748b" }}>Generate New SOP</span>
+            </div>
+            <h2 style={{ fontSize: 22, fontWeight: 700, color: "#0f172a", margin: "0 0 4px" }}>Generate New SOP</h2>
+            <p style={{ fontSize: 13, color: "#64748b", margin: "0 0 24px" }}>Input process details and Claude Haiku generates a GxP-compliant SOP draft with regulatory cross-references, quality checks, and training impact assessment.</p>
+            <Card>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+                <div>
+                  <label style={{ fontSize: 12, fontWeight: 600, color: "#334155", display: "block", marginBottom: 6 }}>Process Name *</label>
+                  <input value={formData.processName} onChange={e => setFormData(p => ({ ...p, processName: e.target.value }))} placeholder="e.g., Inbound Receiving — Truck Unload to Putaway" style={{ width: "100%", padding: "10px 14px", border: "1px solid #cbd5e1", borderRadius: 8, fontSize: 13, boxSizing: "border-box" }} />
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                  <div>
+                    <label style={{ fontSize: 12, fontWeight: 600, color: "#334155", display: "block", marginBottom: 6 }}>Workstream</label>
+                    <select value={formData.workstream} onChange={e => setFormData(p => ({ ...p, workstream: e.target.value }))} style={{ width: "100%", padding: "10px 14px", border: "1px solid #cbd5e1", borderRadius: 8, fontSize: 13, boxSizing: "border-box" }}>
+                      <option>EWM</option><option>Plan</option><option>Finance</option><option>Procurement</option><option>Manufacturing</option><option>Commercial</option><option>Quality</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 12, fontWeight: 600, color: "#334155", display: "block", marginBottom: 6 }}>Target System</label>
+                    <select value={formData.system} onChange={e => setFormData(p => ({ ...p, system: e.target.value }))} style={{ width: "100%", padding: "10px 14px", border: "1px solid #cbd5e1", borderRadius: 8, fontSize: 13, boxSizing: "border-box" }}>
+                      <option>SAP EWM</option><option>SAP S/4HANA PP</option><option>SAP S/4HANA FI</option><option>SAP WM (Legacy)</option><option>Manual / Paper-based</option><option>Other WMS</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              <div style={{ marginTop: 16 }}>
+                <label style={{ fontSize: 12, fontWeight: 600, color: "#334155", display: "block", marginBottom: 6 }}>Key Process Steps (one per line)</label>
+                <textarea value={formData.steps} onChange={e => setFormData(p => ({ ...p, steps: e.target.value }))} rows={6} placeholder={"Truck arrives at dock\nSeal verification\nUnload and inspect\nRF scan goods receipt\nDSCSA serial check\nQuality hold decision\nPutaway to bin\nFI posting confirmation"} style={{ width: "100%", padding: "10px 14px", border: "1px solid #cbd5e1", borderRadius: 8, fontSize: 13, fontFamily: "inherit", resize: "vertical", boxSizing: "border-box" }} />
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginTop: 16 }}>
+                <div>
+                  <label style={{ fontSize: 12, fontWeight: 600, color: "#334155", display: "block", marginBottom: 6 }}>Safety Considerations</label>
+                  <textarea value={formData.safety} onChange={e => setFormData(p => ({ ...p, safety: e.target.value }))} rows={3} placeholder={"PPE requirements\nMax pallet stack height\nCold chain timing constraints\nEquipment certification requirements"} style={{ width: "100%", padding: "10px 14px", border: "1px solid #cbd5e1", borderRadius: 8, fontSize: 13, fontFamily: "inherit", resize: "vertical", boxSizing: "border-box" }} />
+                </div>
+                <div>
+                  <label style={{ fontSize: 12, fontWeight: 600, color: "#334155", display: "block", marginBottom: 6 }}>Regulatory Context</label>
+                  <textarea value={formData.regulatory} onChange={e => setFormData(p => ({ ...p, regulatory: e.target.value }))} rows={3} placeholder={"GxP, DSCSA, 21 CFR 211, ICH Q7, ISO 9001..."} style={{ width: "100%", padding: "10px 14px", border: "1px solid #cbd5e1", borderRadius: 8, fontSize: 13, fontFamily: "inherit", resize: "vertical", boxSizing: "border-box" }} />
+                </div>
+              </div>
+              {/* Upload old doc */}
+              <div style={{ marginTop: 16, padding: 20, border: "2px dashed #cbd5e1", borderRadius: 10, textAlign: "center", cursor: "pointer", background: "#f8fafc" }}>
+                <div style={{ fontSize: 22, marginBottom: 4 }}>📄</div>
+                <div style={{ fontSize: 12, fontWeight: 500, color: "#64748b" }}>Upload existing SOP for differential analysis (optional)</div>
+                <div style={{ fontSize: 10, color: "#94a3b8", marginTop: 2 }}>PDF, DOCX, TXT — AI will compare old vs. generated and categorize changes</div>
+              </div>
+              <div style={{ display: "flex", gap: 12, marginTop: 20, alignItems: "center" }}>
+                <button onClick={handleGenerate} disabled={generating || !formData.processName.trim()} style={{
+                  padding: "12px 28px", fontSize: 14, fontWeight: 600,
+                  background: generating ? "#94a3b8" : !formData.processName.trim() ? "#e2e8f0" : "#0f766e",
+                  color: generating || !formData.processName.trim() ? "#94a3b8" : "#fff",
+                  border: "none", borderRadius: 10, cursor: generating || !formData.processName.trim() ? "default" : "pointer",
+                }}>
+                  {generating ? "⏳ Generating with Claude Haiku..." : "Generate SOP Draft"}
+                </button>
+                <button onClick={goToLibrary} style={{ padding: "12px 20px", fontSize: 13, fontWeight: 600, background: "#f1f5f9", color: "#64748b", border: "none", borderRadius: 10, cursor: "pointer" }}>Cancel</button>
+              </div>
+            </Card>
+          </div>
+        )}
+
+        {/* ──── DETAIL VIEW (continued) ──── */}
+        {view === "detail" && sop && (
+          <div>
+            {/* Breadcrumb */}
+            <div style={{ marginBottom: 16, display: "flex", alignItems: "center", gap: 6 }}>
+              <button onClick={goToLibrary} style={{ fontSize: 12, color: "#0f766e", background: "none", border: "none", cursor: "pointer", fontWeight: 600 }}>← SOP Library</button>
+              <span style={{ fontSize: 12, color: "#cbd5e1" }}>/</span>
+              <span style={{ fontSize: 12, color: "#64748b" }}>{sop.docId}</span>
+            </div>
+
+            {/* ──── DOCUMENT TAB ──── */}
+            {activeTab === "review" && (<>
+              <Card style={{ borderTop: `3px solid ${statusCfg.color}` }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                  <div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
+                      <h2 style={{ fontSize: 18, fontWeight: 700, color: "#0f172a", margin: 0 }}>{sop.title}</h2>
+                      <Badge label={statusCfg.label} color={statusCfg.color} bg={statusCfg.bg} />
+                    </div>
+                    <div style={{ display: "flex", gap: 20, fontSize: 12, color: "#64748b", flexWrap: "wrap" }}>
+                      <span><strong>Doc ID:</strong> {sop.docId}</span>
+                      <span><strong>Rev:</strong> {sop.revision}</span>
+                      <span><strong>Supersedes:</strong> {sop.priorRevision === "N/A" ? "New" : `Rev ${sop.priorRevision}`}</span>
+                      <span><strong>Effective:</strong> {sop.effectiveDate || "Pending"}</span>
+                      <span><strong>Next Review:</strong> {sop.nextReviewDate}</span>
+                      <span><strong>Classification:</strong> <span style={{ color: CHANGE_CLASS[sop.changeClassification].color, fontWeight: 600 }}>{CHANGE_CLASS[sop.changeClassification].label}</span></span>
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
+                    {sop.status === "sme-review" && <button onClick={handleSubmitPO} style={{ padding: "8px 16px", fontSize: 12, fontWeight: 600, background: "#4f46e5", color: "#fff", border: "none", borderRadius: 8, cursor: "pointer" }}>Submit to Process Owner →</button>}
+                    {sop.status === "po-approval" && (<>
+                      <button onClick={handleApprove} style={{ padding: "8px 16px", fontSize: 12, fontWeight: 600, background: "#16a34a", color: "#fff", border: "none", borderRadius: 8, cursor: "pointer" }}>✓ Approve</button>
+                      <button onClick={handleReject} style={{ padding: "8px 16px", fontSize: 12, fontWeight: 600, background: "#fff", color: "#dc2626", border: "1px solid #fecaca", borderRadius: 8, cursor: "pointer" }}>↩ Return</button>
+                    </>)}
+                    {sop.status === "approved" && <Badge label="✓ APPROVED" color="#16a34a" bg="#f0fdf4" />}
+                  </div>
+                </div>
+              </Card>
+
+              <Card>
+                <SectionHeader title="Purpose" />
+                <p style={{ fontSize: 13, color: "#475569", lineHeight: 1.7, margin: 0 }}>{sop.purpose}</p>
+                <div style={{ marginTop: 16 }}><SectionHeader title="Scope" /><p style={{ fontSize: 13, color: "#475569", lineHeight: 1.7, margin: 0 }}>{sop.scope}</p></div>
+              </Card>
+
+              <Card>
+                <SectionHeader title="Responsibilities" count={sop.responsibilities.length} />
+                {sop.responsibilities.map((r, i) => (
+                  <div key={i} style={{ display: "flex", gap: 12, padding: "8px 0", borderTop: i > 0 ? "1px solid #f1f5f9" : "none" }}>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: "#0f766e", minWidth: 160 }}>{r.role}</span>
+                    <span style={{ fontSize: 12, color: "#475569" }}>{r.duties}</span>
+                  </div>
+                ))}
+              </Card>
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+                <Card>
+                  <SectionHeader title="Equipment & PPE" count={sop.equipment.length} />
+                  {sop.equipment.map((e, i) => <div key={i} style={{ fontSize: 12, color: "#475569", padding: "4px 0" }}>• {e}</div>)}
+                </Card>
+                <Card>
+                  <SectionHeader title="Safety" count={sop.safety.length} />
+                  {sop.safety.map((s, i) => <div key={i} style={{ fontSize: 12, color: "#475569", padding: "4px 0" }}>⚠ {s}</div>)}
+                </Card>
+              </div>
+
+              <Card>
+                <SectionHeader title="Procedures" count={sop.procedures.length} />
+                {sop.procedures.map(p => {
+                  const ct = p.changeType ? CHANGE_TYPES[p.changeType] : null;
+                  const isEditing = editingStep === p.id;
+                  return (
+                    <div key={p.id} style={{ padding: "14px 0", borderTop: p.id > 1 ? "1px solid #f1f5f9" : "none" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, flexWrap: "wrap" }}>
+                        <div style={{ width: 26, height: 26, borderRadius: 8, background: "#f0fdfa", border: "1px solid #99f6e4", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: "#0f766e" }}>{p.id}</div>
+                        <span style={{ fontSize: 13, fontWeight: 600, color: "#0f172a" }}>{p.step}</span>
+                        {p.isNew && <Badge label="NEW" color="#dc2626" bg="#fef2f2" />}
+                        {ct && <Badge label={ct.label} color={ct.color} bg={ct.bg} />}
+                        {p.regulatoryRef && <span style={{ fontSize: 10, padding: "2px 8px", background: "#eef2ff", borderRadius: 6, color: "#4f46e5", fontWeight: 500 }}>{p.regulatoryRef}</span>}
+                      </div>
+                      {isEditing ? (
+                        <div style={{ marginLeft: 34 }}>
+                          <textarea value={editText} onChange={e => setEditText(e.target.value)} rows={3} style={{ width: "100%", padding: 8, border: "1px solid #0f766e", borderRadius: 8, fontSize: 12, fontFamily: "inherit", boxSizing: "border-box" }} />
+                          <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
+                            <button onClick={() => handleEdit(p.id, editText)} style={{ padding: "4px 12px", fontSize: 11, background: "#0f766e", color: "#fff", border: "none", borderRadius: 6, cursor: "pointer", fontWeight: 600 }}>Save</button>
+                            <button onClick={() => setEditingStep(null)} style={{ padding: "4px 12px", fontSize: 11, background: "#f1f5f9", color: "#64748b", border: "none", borderRadius: 6, cursor: "pointer" }}>Cancel</button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div style={{ marginLeft: 34, display: "flex", gap: 10 }}>
+                          <p style={{ fontSize: 12, color: "#475569", lineHeight: 1.7, margin: 0, flex: 1 }}>{p.description}</p>
+                          {sop.status === "sme-review" && <button onClick={() => { setEditingStep(p.id); setEditText(p.description); }} style={{ fontSize: 10, color: "#0f766e", background: "none", border: "none", cursor: "pointer", textDecoration: "underline", flexShrink: 0 }}>Edit</button>}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </Card>
+
+              <Card>
+                <SectionHeader title="Quality Checks" count={sop.qualityChecks.length} />
+                {sop.qualityChecks.map(qc => (
+                  <div key={qc.id} style={{ display: "flex", gap: 14, padding: "10px 0", borderTop: qc.id > 1 ? "1px solid #f8fafc" : "none", alignItems: "flex-start" }}>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: "#0f766e", width: 24 }}>{qc.id}</span>
+                    <span style={{ fontSize: 12, color: "#334155", fontWeight: 500, flex: 1 }}>{qc.checkpoint}</span>
+                    <span style={{ fontSize: 11, color: "#64748b", width: 130 }}>{qc.frequency}</span>
+                    <span style={{ fontSize: 11, color: "#475569", flex: 1 }}>{qc.criteria}</span>
+                    <span style={{ fontSize: 10, color: "#4f46e5", fontWeight: 500, width: 110, textAlign: "right" }}>{qc.regulatoryRef}</span>
+                  </div>
+                ))}
+              </Card>
+
+              <Card style={{ border: "1px solid #fde68a", background: "#fffdf7" }}>
+                <SectionHeader title="Training Impact" count={`${sop.trainingImpact.filter(t => t.required).length} roles require retraining`} />
+                {sop.trainingImpact.map((t, i) => (
+                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, padding: "8px 0", borderTop: i > 0 ? "1px solid #fef3c7" : "none" }}>
+                    <span style={{ width: 20, height: 20, borderRadius: 6, background: t.required ? "#fef2f2" : "#f0fdf4", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700, color: t.required ? "#dc2626" : "#16a34a" }}>{t.required ? "!" : "✓"}</span>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: "#334155", minWidth: 160 }}>{t.role}</span>
+                    <span style={{ fontSize: 12, color: "#64748b", flex: 1 }}>{t.reason}</span>
+                    <Badge label={t.required ? "Required" : "Awareness"} color={t.required ? "#dc2626" : "#16a34a"} bg={t.required ? "#fef2f2" : "#f0fdf4"} />
+                  </div>
+                ))}
+              </Card>
+            </>)}
+
+            {/* ──── COMPARE TAB ──── */}
+            {activeTab === "compare" && (<>
+              <div style={{ marginBottom: 24 }}>
+                <h2 style={{ fontSize: 20, fontWeight: 700, color: "#0f172a", margin: "0 0 4px" }}>Differential Analysis</h2>
+                <p style={{ fontSize: 13, color: "#64748b", margin: 0 }}>{sop.docId} Rev {sop.priorRevision || "N/A"} → Rev {sop.revision} · {sop.diffs.length} change{sop.diffs.length !== 1 ? "s" : ""} detected</p>
+              </div>
+              {sop.diffs.length === 0 ? (
+                <Card style={{ textAlign: "center", padding: 40 }}>
+                  <div style={{ fontSize: 28, marginBottom: 8 }}>✓</div>
+                  <div style={{ fontSize: 14, fontWeight: 500, color: "#64748b" }}>New document — no prior version to compare</div>
+                </Card>
+              ) : sop.diffs.map((diff, i) => {
+                const ct = CHANGE_TYPES[diff.type];
+                return (
+                  <Card key={i}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: "#334155" }}>Step {diff.step}</span>
+                      <Badge label={ct.label} color={ct.color} bg={ct.bg} />
+                    </div>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+                      <div style={{ padding: "12px 16px", background: "#fef2f2", borderRadius: 8, borderLeft: "3px solid #fca5a5" }}>
+                        <div style={{ fontSize: 10, fontWeight: 600, color: "#dc2626", marginBottom: 6, letterSpacing: 0.5 }}>OLD — Rev {sop.priorRevision}</div>
+                        <div style={{ fontSize: 12, color: "#7f1d1d", lineHeight: 1.6 }}>{diff.old}</div>
+                      </div>
+                      <div style={{ padding: "12px 16px", background: "#f0fdf4", borderRadius: 8, borderLeft: "3px solid #86efac" }}>
+                        <div style={{ fontSize: 10, fontWeight: 600, color: "#16a34a", marginBottom: 6, letterSpacing: 0.5 }}>NEW — Rev {sop.revision}</div>
+                        <div style={{ fontSize: 12, color: "#14532d", lineHeight: 1.6 }}>{diff.new}</div>
+                      </div>
+                    </div>
+                    <div style={{ marginTop: 10, fontSize: 12, color: "#64748b", fontStyle: "italic" }}>Impact: {diff.impact}</div>
+                  </Card>
+                );
+              })}
+            </>)}
+
+            {/* ──── AUDIT TRAIL TAB ──── */}
+            {activeTab === "audit" && (<>
+              <h2 style={{ fontSize: 20, fontWeight: 700, color: "#0f172a", margin: "0 0 4px" }}>Audit Trail</h2>
+              <p style={{ fontSize: 13, color: "#64748b", margin: "0 0 24px" }}>{sop.docId} · ALCOA+ compliant — all actions timestamped and attributed</p>
+              <Card>
+                {[...sop.auditTrail].reverse().map((entry, i) => {
+                  const isAI = entry.user.includes("AI");
+                  const isApproval = entry.action.includes("APPROVED");
+                  const isReject = entry.action.includes("RETURNED");
+                  return (
+                    <div key={i} style={{ display: "grid", gridTemplateColumns: "140px 180px 1fr", gap: 8, padding: "12px 0", borderBottom: i < sop.auditTrail.length - 1 ? "1px solid #f8fafc" : "none", background: isApproval ? "#f0fdf418" : isReject ? "#fef2f218" : "transparent" }}>
+                      <span style={{ fontSize: 11, color: "#94a3b8", fontFamily: "monospace" }}>{entry.timestamp}</span>
+                      <span style={{ fontSize: 12, fontWeight: 500, color: isAI ? "#7c3aed" : "#334155" }}>{entry.user}</span>
+                      <div>
+                        <div style={{ fontSize: 12, color: "#0f172a", fontWeight: 500 }}>{entry.action}</div>
+                        <div style={{ fontSize: 11, color: "#64748b", marginTop: 2 }}>{entry.detail}</div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </Card>
+            </>)}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>
