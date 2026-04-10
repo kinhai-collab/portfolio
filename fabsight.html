@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FabSight — Equipment Intelligence</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'DM Sans',sans-serif;background:#f8f9fa;color:#1a1a2e;min-height:100vh;padding:24px;}
+.mono{font-family:'JetBrains Mono',monospace;}
+
+.dashboard{max-width:900px;margin:0 auto;}
+
+.main-card{background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:24px;margin-bottom:16px;}
+
+.header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;}
+.header-title{font-size:22px;font-weight:600;color:#1a1a2e;}
+.header-sub{font-size:12px;color:#9ca3af;margin-top:4px;}
+.header-badges{display:flex;gap:6px;align-items:center;}
+.badge{font-size:10px;padding:4px 12px;border-radius:20px;font-weight:500;}
+.badge-live{background:#f0fdf4;color:#15803d;}
+.badge-alert{background:#fef2f2;color:#dc2626;}
+
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:24px;}
+.metric-card{background:#f9fafb;border-radius:10px;padding:14px;text-align:center;border:1px solid #f3f4f6;}
+.metric-val{font-size:26px;font-weight:600;}
+.metric-label{font-size:10px;color:#9ca3af;margin-top:3px;}
+.c-green{color:#059669;}.c-amber{color:#d97706;}.c-red{color:#dc2626;}.c-blue{color:#2563eb;}
+
+.section-divider{border-top:1px solid #f3f4f6;padding-top:20px;margin-bottom:20px;}
+.section-label{font-size:11px;font-weight:500;color:#9ca3af;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:14px;}
+
+.timeline-axis{display:flex;justify-content:space-between;font-size:9px;color:#d1d5db;margin-bottom:8px;padding-left:68px;padding-right:38px;}
+.timeline-axis .now{font-weight:500;color:#6b7280;}
+
+.machine-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;cursor:pointer;padding:3px 4px;border-radius:6px;transition:background 0.15s;}
+.machine-row:hover{background:#f0fdf4;}
+.machine-row.active{background:#ecfdf5;outline:2px solid #34d399;outline-offset:-1px;}
+.machine-name{font-size:11px;color:#6b7280;width:62px;text-align:right;flex-shrink:0;font-family:'JetBrains Mono',monospace;}
+.machine-name.err{color:#dc2626;font-weight:500;}
+.machine-name.idle{color:#d97706;}
+.machine-track{flex:1;height:16px;background:#f3f4f6;border-radius:5px;position:relative;overflow:hidden;}
+.bar-run{position:absolute;top:0;height:100%;border-radius:5px;background:#6ee7b7;}
+.bar-pred{position:absolute;top:0;height:100%;border-radius:5px;background:#6ee7b7;opacity:0.25;border:1.5px dashed #059669;box-sizing:border-box;}
+.bar-err{position:absolute;top:0;height:100%;border-radius:5px;background:#fca5a5;}
+.bar-idle{position:absolute;top:0;height:100%;border-radius:5px;background:#fcd34d;opacity:0.35;}
+.bar-done{position:absolute;top:0;height:100%;border-radius:5px;background:#93c5fd;}
+.now-line{position:absolute;top:0;left:60%;width:1.5px;height:100%;background:#d1d5db;}
+.machine-time{font-size:10px;width:34px;text-align:right;font-family:'JetBrains Mono',monospace;color:#9ca3af;}
+.machine-time.err{color:#dc2626;font-weight:500;}
+.machine-time.idle{color:#d97706;}
+.machine-time.done{color:#2563eb;}
+
+.legend{display:flex;gap:14px;margin-top:12px;flex-wrap:wrap;}
+.legend-item{display:flex;align-items:center;gap:4px;font-size:10px;color:#9ca3af;}
+.legend-dot{width:8px;height:8px;border-radius:2px;display:inline-block;}
+
+.dispatch-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
+.badge-ai{font-size:10px;padding:3px 10px;border-radius:20px;background:#f0fdf4;color:#15803d;font-weight:500;}
+
+.dispatch-item{padding-left:14px;margin-bottom:12px;border-left:3px solid transparent;}
+.dispatch-item.p-err{border-left-color:#dc2626;}
+.dispatch-item.p-done{border-left-color:#2563eb;}
+.dispatch-item.p-pred{border-left-color:#059669;}
+.dispatch-machine{font-size:13px;font-weight:500;color:#1a1a2e;}
+.dispatch-tag{font-size:11px;font-weight:400;margin-left:4px;}
+.dispatch-tag.t-err{color:#dc2626;}.dispatch-tag.t-done{color:#2563eb;}.dispatch-tag.t-pred{color:#059669;}
+.dispatch-desc{font-size:12px;color:#6b7280;margin-top:3px;line-height:1.5;}
+
+.handoff-label{font-size:11px;font-weight:500;color:#9ca3af;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px;}
+.handoff-text{font-size:13px;color:#6b7280;line-height:1.7;}
+
+/* Detail Panel */
+.detail-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.3);z-index:100;display:none;align-items:center;justify-content:center;padding:24px;}
+.detail-overlay.open{display:flex;}
+.detail-panel{background:#fff;border-radius:16px;border:1px solid #e5e7eb;max-width:760px;width:100%;max-height:90vh;overflow-y:auto;padding:28px;}
+
+.detail-close{float:right;background:none;border:1px solid #e5e7eb;border-radius:8px;padding:4px 12px;font-size:13px;color:#6b7280;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background 0.15s;}
+.detail-close:hover{background:#f3f4f6;}
+
+.detail-header{margin-bottom:24px;}
+.detail-machine-name{font-size:20px;font-weight:600;color:#1a1a2e;font-family:'JetBrains Mono',monospace;}
+.detail-status{display:inline-block;font-size:11px;padding:3px 10px;border-radius:20px;font-weight:500;margin-left:8px;}
+.detail-status.s-run{background:#f0fdf4;color:#15803d;}
+.detail-status.s-err{background:#fef2f2;color:#dc2626;}
+.detail-status.s-idle{background:#fffbeb;color:#d97706;}
+.detail-status.s-done{background:#eff6ff;color:#2563eb;}
+.detail-sub{font-size:12px;color:#9ca3af;margin-top:4px;}
+
+.detail-metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:24px;}
+.detail-metric{background:#f9fafb;border-radius:10px;padding:12px;text-align:center;border:1px solid #f3f4f6;}
+.detail-metric-val{font-size:18px;font-weight:600;color:#1a1a2e;}
+.detail-metric-label{font-size:10px;color:#9ca3af;margin-top:2px;}
+
+.chart-section{margin-bottom:24px;}
+.chart-title{font-size:11px;font-weight:500;color:#9ca3af;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px;}
+.chart-wrap{position:relative;height:180px;background:#f9fafb;border-radius:10px;padding:12px;border:1px solid #f3f4f6;}
+
+.anomaly-log{margin-top:0;}
+.anomaly-item{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #f3f4f6;font-size:12px;}
+.anomaly-item:last-child{border-bottom:none;}
+.anomaly-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.anomaly-dot.a-err{background:#dc2626;}
+.anomaly-dot.a-early{background:#2563eb;}
+.anomaly-dot.a-late{background:#d97706;}
+.anomaly-time{font-family:'JetBrains Mono',monospace;font-size:11px;color:#9ca3af;width:70px;flex-shrink:0;}
+.anomaly-text{color:#6b7280;flex:1;}
+</style>
+</head>
+<body>
+
+<div class="dashboard">
+
+<!-- Main Card -->
+<div class="main-card">
+<div class="header">
+<div>
+<div class="header-title">FabSight — Equipment intelligence</div>
+<div class="header-sub">San Jose fab · 22 tools · A shift active</div>
+</div>
+<div class="header-badges">
+<span class="badge badge-live">22 online</span>
+<span class="badge badge-alert">1 alert</span>
+</div>
+</div>
+
+<div class="metrics">
+<div class="metric-card"><div class="metric-val c-green">18</div><div class="metric-label">Running</div></div>
+<div class="metric-card"><div class="metric-val c-amber">2</div><div class="metric-label">Idle</div></div>
+<div class="metric-card"><div class="metric-val c-red">1</div><div class="metric-label">Error</div></div>
+<div class="metric-card"><div class="metric-val c-blue">1</div><div class="metric-label">Complete</div></div>
+</div>
+
+<div class="section-divider">
+<div class="section-label">Job timeline</div>
+<div class="timeline-axis"><span>-2h</span><span>-1h</span><span class="now">now</span><span>+1h</span><span>+2h</span></div>
+<div id="machine-list"></div>
+<div class="legend">
+<div class="legend-item"><span class="legend-dot" style="background:#6ee7b7;"></span>Running</div>
+<div class="legend-item"><span class="legend-dot" style="background:#6ee7b7;opacity:0.3;border:1.5px dashed #059669;box-sizing:border-box;"></span>Predicted</div>
+<div class="legend-item"><span class="legend-dot" style="background:#fca5a5;"></span>Error</div>
+<div class="legend-item"><span class="legend-dot" style="background:#fcd34d;opacity:0.4;"></span>Idle</div>
+<div class="legend-item"><span class="legend-dot" style="background:#93c5fd;"></span>Complete</div>
+</div>
+</div>
+
+<div class="section-divider">
+<div class="dispatch-header">
+<div class="section-label" style="margin-bottom:0;">Dispatch recommendations</div>
+<span class="badge-ai">AI-generated</span>
+</div>
+<div class="dispatch-item p-err">
+<div><span class="dispatch-machine">CVD-01</span><span class="dispatch-tag t-err">temp 412°C · 14m ago</span></div>
+<div class="dispatch-desc">Escalate to senior tech. Chamber inspection required before restart.</div>
+</div>
+<div class="dispatch-item p-done">
+<div><span class="dispatch-machine">SPUT-01</span><span class="dispatch-tag t-done">complete · 8m ago</span></div>
+<div class="dispatch-desc">Assign unload to nearest available engineer. Stage lot transfer.</div>
+</div>
+<div class="dispatch-item p-pred">
+<div><span class="dispatch-machine">LITHO-02</span><span class="dispatch-tag t-pred">est. complete +34m</span></div>
+<div class="dispatch-desc">Pre-stage engineer for lot swap. Next recipe: LITHO-R7.</div>
+</div>
+</div>
+
+<div class="section-divider">
+<div class="handoff-label">Shift B handoff — incoming in 22 min</div>
+<div class="handoff-text">6 jobs completing next shift. 1 error requiring resolution before restart. Idle gap risk: ETCH-02 (47 min idle, no lot queued). Recommend pre-staging 2 lots from WIP buffer.</div>
+</div>
+</div>
+</div>
+
+<!-- Detail Overlay -->
+<div class="detail-overlay" id="detailOverlay" onclick="if(event.target===this)closeDetail()">
+<div class="detail-panel" id="detailPanel">
+<button class="detail-close" onclick="closeDetail()">Close</button>
+<div class="detail-header">
+<span class="detail-machine-name" id="detailName"></span>
+<span class="detail-status" id="detailStatus"></span>
+<div class="detail-sub" id="detailSub"></div>
+</div>
+<div class="detail-metrics" id="detailMetrics"></div>
+<div class="chart-section">
+<div class="chart-title">Temperature — last 2 hours</div>
+<div class="chart-wrap"><canvas id="tempChart"></canvas></div>
+</div>
+<div class="chart-section">
+<div class="chart-title">Cycle time — last 8 jobs (actual vs. expected)</div>
+<div class="chart-wrap"><canvas id="cycleChart"></canvas></div>
+</div>
+<div class="chart-section">
+<div class="chart-title">Recent anomalies</div>
+<div class="anomaly-log" id="anomalyLog"></div>
+</div>
+</div>
+</div>
+
+<script>
+const machines = [
+  {id:'ICP-01',status:'running',runL:8,runW:52,predL:60,predW:16,timeLabel:'+1:12',recipe:'ICP-R3',job:'#4492',temp:285,tempThresh:350,uptime:94.2,idleToday:'12m',jobsShift:3,lastErr:'2d ago',tempProfile:'normal',cycleProfile:'normal'},
+  {id:'ICP-02',status:'running',runL:15,runW:45,predL:60,predW:12,timeLabel:'+0:48',recipe:'ICP-R1',job:'#4493',temp:291,tempThresh:350,uptime:91.8,idleToday:'18m',jobsShift:2,lastErr:'5d ago',tempProfile:'normal',cycleProfile:'normal'},
+  {id:'CVD-01',status:'error',runL:5,runW:46,errL:51,errW:9,timeLabel:'ERR',recipe:'CVD-R2',job:'#4487',temp:412,tempThresh:380,uptime:67.3,idleToday:'0m',jobsShift:1,lastErr:'14m ago',tempProfile:'spike',cycleProfile:'late'},
+  {id:'CVD-02',status:'running',runL:10,runW:50,predL:60,predW:20,timeLabel:'+1:38',recipe:'CVD-R1',job:'#4489',temp:342,tempThresh:380,uptime:89.5,idleToday:'22m',jobsShift:2,lastErr:'1d ago',tempProfile:'normal',cycleProfile:'normal'},
+  {id:'ETCH-01',status:'running',runL:12,runW:48,predL:60,predW:22,timeLabel:'+1:45',recipe:'ETCH-R4',job:'#4491',temp:195,tempThresh:260,uptime:96.1,idleToday:'8m',jobsShift:4,lastErr:'8d ago',tempProfile:'normal',cycleProfile:'early'},
+  {id:'ETCH-02',status:'idle',runL:5,runW:36,idleL:41,idleW:19,timeLabel:'IDLE',recipe:'—',job:'—',temp:42,tempThresh:260,uptime:72.4,idleToday:'47m',jobsShift:2,lastErr:'3d ago',tempProfile:'cool',cycleProfile:'late'},
+  {id:'LITHO-01',status:'running',runL:20,runW:40,predL:60,predW:14,timeLabel:'+0:56',recipe:'LITHO-R5',job:'#4494',temp:223,tempThresh:300,uptime:93.7,idleToday:'14m',jobsShift:3,lastErr:'4d ago',tempProfile:'normal',cycleProfile:'normal'},
+  {id:'LITHO-02',status:'running',runL:28,runW:32,predL:60,predW:18,timeLabel:'+0:34',recipe:'LITHO-R7',job:'#4488',temp:218,tempThresh:300,uptime:90.2,idleToday:'20m',jobsShift:3,lastErr:'6d ago',tempProfile:'normal',cycleProfile:'early'},
+  {id:'SPUT-01',status:'complete',runL:10,runW:48,doneL:58,doneW:3,timeLabel:'DONE',recipe:'SPUT-R2',job:'#4481',temp:88,tempThresh:200,uptime:88.9,idleToday:'8m',jobsShift:4,lastErr:'12d ago',tempProfile:'cool',cycleProfile:'normal'},
+  {id:'SPUT-02',status:'running',runL:18,runW:42,predL:60,predW:16,timeLabel:'+1:20',recipe:'SPUT-R1',job:'#4495',temp:156,tempThresh:200,uptime:91.4,idleToday:'16m',jobsShift:2,lastErr:'7d ago',tempProfile:'normal',cycleProfile:'normal'},
+  {id:'COAT-01',status:'running',runL:6,runW:54,predL:60,predW:18,timeLabel:'+1:28',recipe:'COAT-R3',job:'#4496',temp:178,tempThresh:240,uptime:95.3,idleToday:'10m',jobsShift:3,lastErr:'9d ago',tempProfile:'normal',cycleProfile:'normal'},
+  {id:'COAT-02',status:'running',runL:22,runW:38,predL:60,predW:14,timeLabel:'+0:52',recipe:'COAT-R1',job:'#4497',temp:182,tempThresh:240,uptime:93.8,idleToday:'12m',jobsShift:3,lastErr:'3d ago',tempProfile:'normal',cycleProfile:'early'},
+  {id:'CMP-01',status:'running',runL:18,runW:42,predL:60,predW:26,timeLabel:'+2:05',recipe:'CMP-R2',job:'#4490',temp:145,tempThresh:200,uptime:90.6,idleToday:'19m',jobsShift:2,lastErr:'5d ago',tempProfile:'normal',cycleProfile:'late'},
+  {id:'CMP-02',status:'running',runL:25,runW:35,predL:60,predW:12,timeLabel:'+0:44',recipe:'CMP-R1',job:'#4498',temp:152,tempThresh:200,uptime:92.1,idleToday:'15m',jobsShift:3,lastErr:'11d ago',tempProfile:'normal',cycleProfile:'normal'},
+  {id:'ANNL-01',status:'idle',runL:8,runW:30,idleL:38,idleW:22,timeLabel:'IDLE',recipe:'—',job:'—',temp:68,tempThresh:450,uptime:78.3,idleToday:'22m',jobsShift:2,lastErr:'2d ago',tempProfile:'cool',cycleProfile:'late'},
+  {id:'ANNL-02',status:'running',runL:14,runW:46,predL:60,predW:20,timeLabel:'+1:32',recipe:'ANNL-R1',job:'#4499',temp:388,tempThresh:450,uptime:94.7,idleToday:'10m',jobsShift:3,lastErr:'14d ago',tempProfile:'normal',cycleProfile:'normal'},
+  {id:'TEST-01',status:'running',runL:30,runW:30,predL:60,predW:10,timeLabel:'+0:28',recipe:'TEST-R2',job:'#4500',temp:72,tempThresh:120,uptime:97.2,idleToday:'6m',jobsShift:5,lastErr:'18d ago',tempProfile:'normal',cycleProfile:'early'},
+  {id:'TEST-02',status:'running',runL:8,runW:52,predL:60,predW:22,timeLabel:'+1:50',recipe:'TEST-R1',job:'#4501',temp:68,tempThresh:120,uptime:96.8,idleToday:'8m',jobsShift:4,lastErr:'10d ago',tempProfile:'normal',cycleProfile:'normal'},
+  {id:'CLEAN-01',status:'running',runL:16,runW:44,predL:60,predW:16,timeLabel:'+1:14',recipe:'CLEAN-R1',job:'#4502',temp:55,tempThresh:90,uptime:98.1,idleToday:'4m',jobsShift:5,lastErr:'22d ago',tempProfile:'normal',cycleProfile:'normal'},
+  {id:'CLEAN-02',status:'running',runL:20,runW:40,predL:60,predW:14,timeLabel:'+1:02',recipe:'CLEAN-R2',job:'#4503',temp:52,tempThresh:90,uptime:97.5,idleToday:'6m',jobsShift:4,lastErr:'15d ago',tempProfile:'normal',cycleProfile:'normal'},
+  {id:'INSP-01',status:'running',runL:12,runW:48,predL:60,predW:18,timeLabel:'+1:22',recipe:'INSP-R1',job:'#4504',temp:38,tempThresh:80,uptime:99.1,idleToday:'2m',jobsShift:6,lastErr:'30d ago',tempProfile:'normal',cycleProfile:'normal'},
+  {id:'INSP-02',status:'running',runL:24,runW:36,predL:60,predW:12,timeLabel:'+0:40',recipe:'INSP-R2',job:'#4505',temp:41,tempThresh:80,uptime:98.4,idleToday:'4m',jobsShift:5,lastErr:'20d ago',tempProfile:'normal',cycleProfile:'early'}
+];
+
+const listEl = document.getElementById('machine-list');
+let activeRow = null;
+
+machines.forEach((m,i) => {
+  const row = document.createElement('div');
+  row.className = 'machine-row';
+  row.dataset.idx = i;
+
+  const nameClass = m.status === 'error' ? 'err' : m.status === 'idle' ? 'idle' : '';
+  const timeClass = m.status === 'error' ? 'err' : m.status === 'idle' ? 'idle' : m.status === 'complete' ? 'done' : '';
+
+  let bars = '';
+  bars += `<div class="bar-run" style="left:${m.runL}%;width:${m.runW}%;"></div>`;
+  if (m.predL !== undefined && m.status === 'running') bars += `<div class="bar-pred" style="left:${m.predL}%;width:${m.predW}%;"></div>`;
+  if (m.errL !== undefined) bars += `<div class="bar-err" style="left:${m.errL}%;width:${m.errW}%;"></div>`;
+  if (m.idleL !== undefined) bars += `<div class="bar-idle" style="left:${m.idleL}%;width:${m.idleW}%;"></div>`;
+  if (m.doneL !== undefined) bars += `<div class="bar-done" style="left:${m.doneL}%;width:${m.doneW}%;"></div>`;
+  bars += `<div class="now-line"></div>`;
+
+  row.innerHTML = `
+    <div class="machine-name ${nameClass}">${m.id}</div>
+    <div class="machine-track">${bars}</div>
+    <div class="machine-time ${timeClass}">${m.timeLabel}</div>
+  `;
+
+  row.addEventListener('click', () => openDetail(i, row));
+  listEl.appendChild(row);
+});
+
+let tempChartInst = null, cycleChartInst = null;
+
+function generateTempData(profile, thresh) {
+  const pts = 24;
+  const data = [];
+  const base = thresh * 0.7;
+  for (let i = 0; i < pts; i++) {
+    let v = base + (Math.random() - 0.5) * thresh * 0.15;
+    if (profile === 'spike' && i >= 18) v = thresh + (i - 18) * (thresh * 0.06) + Math.random() * 10;
+    if (profile === 'cool') v = thresh * 0.25 + Math.random() * thresh * 0.1;
+    data.push(Math.round(v));
+  }
+  return data;
+}
+
+function generateCycleData(profile) {
+  const expected = [];
+  const actual = [];
+  for (let i = 0; i < 8; i++) {
+    const exp = 60 + Math.floor(Math.random() * 60);
+    expected.push(exp);
+    let act = exp + Math.round((Math.random() - 0.5) * 12);
+    if (profile === 'late' && i >= 5) act = exp + 15 + Math.floor(Math.random() * 20);
+    if (profile === 'early' && i % 3 === 0) act = exp - 10 - Math.floor(Math.random() * 8);
+    actual.push(act);
+  }
+  return { expected, actual };
+}
+
+function generateAnomalies(m) {
+  const items = [];
+  if (m.status === 'error') {
+    items.push({ type: 'err', time: '14m ago', text: `Temperature exceeded ${m.tempThresh}°C threshold — current reading ${m.temp}°C` });
+  }
+  if (m.cycleProfile === 'late') {
+    items.push({ type: 'late', time: '1h 22m ago', text: 'Job completed 18 min later than expected cycle time' });
+    items.push({ type: 'late', time: '4h 10m ago', text: 'Job completed 24 min later than expected cycle time' });
+  }
+  if (m.cycleProfile === 'early') {
+    items.push({ type: 'early', time: '2h 05m ago', text: 'Job completed 12 min earlier than expected — verify output quality' });
+  }
+  if (items.length === 0) {
+    items.push({ type: 'early', time: m.lastErr, text: 'No anomalies this shift. Last event: minor cycle deviation.' });
+  }
+  return items;
+}
+
+function openDetail(idx, rowEl) {
+  const m = machines[idx];
+  if (activeRow) activeRow.classList.remove('active');
+  activeRow = rowEl;
+  activeRow.classList.add('active');
+
+  document.getElementById('detailName').textContent = m.id;
+  const statusEl = document.getElementById('detailStatus');
+  const statusMap = { running: ['Running', 's-run'], error: ['Error', 's-err'], idle: ['Idle', 's-idle'], complete: ['Complete', 's-done'] };
+  const [sText, sClass] = statusMap[m.status];
+  statusEl.textContent = sText;
+  statusEl.className = 'detail-status ' + sClass;
+
+  const jobText = m.job !== '—' ? `Job ${m.job} · Recipe: ${m.recipe}` : 'No active job — awaiting lot assignment';
+  document.getElementById('detailSub').textContent = jobText;
+
+  document.getElementById('detailMetrics').innerHTML = `
+    <div class="detail-metric"><div class="detail-metric-val">${m.uptime}%</div><div class="detail-metric-label">Uptime today</div></div>
+    <div class="detail-metric"><div class="detail-metric-val">${m.idleToday}</div><div class="detail-metric-label">Idle time today</div></div>
+    <div class="detail-metric"><div class="detail-metric-val">${m.jobsShift}</div><div class="detail-metric-label">Jobs this shift</div></div>
+    <div class="detail-metric"><div class="detail-metric-val">${m.lastErr}</div><div class="detail-metric-label">Last error</div></div>
+  `;
+
+  // Temp chart
+  if (tempChartInst) tempChartInst.destroy();
+  const tempData = generateTempData(m.tempProfile, m.tempThresh);
+  const tempLabels = [];
+  for (let i = 0; i < 24; i++) tempLabels.push(i % 4 === 0 ? `-${120 - i * 5}m` : '');
+
+  tempChartInst = new Chart(document.getElementById('tempChart'), {
+    type: 'line',
+    data: {
+      labels: tempLabels,
+      datasets: [
+        { label: 'Temperature (°C)', data: tempData, borderColor: '#059669', backgroundColor: 'rgba(5,150,105,0.08)', fill: true, tension: 0.3, pointRadius: 0, borderWidth: 2 },
+        { label: 'Threshold', data: Array(24).fill(m.tempThresh), borderColor: '#dc2626', borderDash: [6, 4], borderWidth: 1.5, pointRadius: 0, fill: false }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: true, position: 'top', align: 'end', labels: { boxWidth: 12, font: { size: 10, family: "'DM Sans'" }, color: '#9ca3af', padding: 12 } } },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { size: 9, family: "'JetBrains Mono'" }, color: '#d1d5db', maxRotation: 0 } },
+        y: { grid: { color: '#f3f4f6' }, ticks: { font: { size: 9, family: "'JetBrains Mono'" }, color: '#9ca3af' }, min: 0 }
+      }
+    }
+  });
+
+  // Cycle chart
+  if (cycleChartInst) cycleChartInst.destroy();
+  const cycleData = generateCycleData(m.cycleProfile);
+  const cycleLabels = ['Job -8', 'Job -7', 'Job -6', 'Job -5', 'Job -4', 'Job -3', 'Job -2', 'Job -1'];
+
+  cycleChartInst = new Chart(document.getElementById('cycleChart'), {
+    type: 'bar',
+    data: {
+      labels: cycleLabels,
+      datasets: [
+        { label: 'Expected (min)', data: cycleData.expected, backgroundColor: '#d1d5db', borderRadius: 4, barPercentage: 0.5, categoryPercentage: 0.7 },
+        { label: 'Actual (min)', data: cycleData.actual, backgroundColor: cycleData.actual.map((a, i) => {
+          const diff = a - cycleData.expected[i];
+          if (diff > 12) return '#fca5a5';
+          if (diff < -8) return '#93c5fd';
+          return '#6ee7b7';
+        }), borderRadius: 4, barPercentage: 0.5, categoryPercentage: 0.7 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: true, position: 'top', align: 'end', labels: { boxWidth: 12, font: { size: 10, family: "'DM Sans'" }, color: '#9ca3af', padding: 12 } } },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { size: 9, family: "'JetBrains Mono'" }, color: '#d1d5db' } },
+        y: { grid: { color: '#f3f4f6' }, ticks: { font: { size: 9, family: "'JetBrains Mono'" }, color: '#9ca3af' }, beginAtZero: true }
+      }
+    }
+  });
+
+  // Anomaly log
+  const anomalies = generateAnomalies(m);
+  document.getElementById('anomalyLog').innerHTML = anomalies.map(a => `
+    <div class="anomaly-item">
+      <div class="anomaly-dot a-${a.type}"></div>
+      <div class="anomaly-time">${a.time}</div>
+      <div class="anomaly-text">${a.text}</div>
+    </div>
+  `).join('');
+
+  document.getElementById('detailOverlay').classList.add('open');
+}
+
+function closeDetail() {
+  document.getElementById('detailOverlay').classList.remove('open');
+  if (activeRow) activeRow.classList.remove('active');
+  activeRow = null;
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDetail(); });
+</script>
+
+</body>
+</html>

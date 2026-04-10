@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ScrapSight — Scrap Cost Intelligence</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'DM Sans',sans-serif;background:#f8f9fa;color:#1a1a2e;min-height:100vh;padding:24px;}
+.dashboard{max-width:940px;margin:0 auto;}
+
+.tab-bar{display:flex;gap:0;margin-bottom:20px;border:1px solid #e5e7eb;border-radius:10px;overflow:hidden;}
+.tab-btn{flex:1;padding:14px 20px;font-size:13px;font-weight:500;font-family:'DM Sans',sans-serif;border:none;cursor:pointer;background:#fff;color:#6b7280;transition:all 0.2s;text-align:center;}
+.tab-btn:first-child{border-right:1px solid #e5e7eb;}
+.tab-btn.active{background:#059669;color:#fff;}
+.tab-btn:hover:not(.active){background:#f0fdf4;}
+.tab-label{display:block;font-size:10px;color:#9ca3af;margin-top:2px;font-weight:400;}
+.tab-btn.active .tab-label{color:rgba(255,255,255,0.7);}
+
+.panel{display:none;}.panel.active{display:block;}
+.card{background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:24px;margin-bottom:16px;}
+.card-title{font-size:18px;font-weight:600;color:#1a1a2e;margin-bottom:4px;}
+.card-sub{font-size:12px;color:#9ca3af;margin-bottom:20px;line-height:1.5;}
+.section-divider{border-top:1px solid #f3f4f6;padding-top:20px;margin-top:20px;}
+.section-label{font-size:11px;font-weight:500;color:#9ca3af;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:14px;}
+
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px;}
+.metrics-3{grid-template-columns:repeat(3,1fr);}
+.metric-card{background:#f9fafb;border-radius:10px;padding:14px;text-align:center;border:1px solid #f3f4f6;}
+.metric-val{font-size:22px;font-weight:600;}
+.metric-label{font-size:10px;color:#9ca3af;margin-top:3px;}
+
+.chart-wrap{position:relative;height:220px;background:#f9fafb;border-radius:10px;padding:12px;border:1px solid #f3f4f6;margin-bottom:16px;}
+.chart-wrap-sm{height:180px;}
+
+.badge{font-size:10px;padding:3px 10px;border-radius:20px;font-weight:500;display:inline-block;}
+.badge-ai{background:#f0fdf4;color:#15803d;}
+.badge-alert{background:#fef2f2;color:#dc2626;}
+.badge-amber{background:#fffbeb;color:#d97706;}
+.badge-blue{background:#eff6ff;color:#2563eb;}
+
+/* Toggle */
+.toggle-row{display:flex;gap:0;margin-bottom:16px;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;}
+.toggle-btn{padding:8px 16px;font-size:12px;font-weight:500;font-family:'DM Sans',sans-serif;border:none;cursor:pointer;background:#fff;color:#6b7280;transition:all 0.15s;}
+.toggle-btn.active{background:#1a1a2e;color:#fff;}
+.toggle-btn:not(:last-child){border-right:1px solid #e5e7eb;}
+
+/* Breadcrumb */
+.breadcrumb{display:flex;align-items:center;gap:6px;margin-bottom:16px;font-size:12px;color:#9ca3af;}
+.breadcrumb a{color:#059669;text-decoration:none;cursor:pointer;font-weight:500;}
+.breadcrumb a:hover{text-decoration:underline;}
+.breadcrumb span{color:#d1d5db;}
+
+/* Site row */
+.site-row{display:flex;align-items:center;gap:12px;padding:14px 16px;border:1px solid #e5e7eb;border-radius:10px;margin-bottom:8px;cursor:pointer;transition:all 0.15s;}
+.site-row:hover{border-color:#059669;background:#f0fdf4;}
+.site-name{font-size:14px;font-weight:500;color:#1a1a2e;width:160px;flex-shrink:0;}
+.site-bar-wrap{flex:1;height:10px;background:#f3f4f6;border-radius:5px;overflow:hidden;}
+.site-bar{height:100%;border-radius:5px;background:#6ee7b7;}
+.site-cost{font-size:14px;font-weight:600;font-family:'JetBrains Mono',monospace;color:#1a1a2e;width:80px;text-align:right;}
+.site-pct{font-size:11px;color:#9ca3af;width:40px;text-align:right;font-family:'JetBrains Mono',monospace;}
+
+/* Lot table */
+.lot-header{display:flex;gap:8px;padding:8px 12px;font-size:10px;color:#d1d5db;text-transform:uppercase;letter-spacing:0.04em;}
+.lot-row{display:flex;align-items:center;gap:8px;padding:10px 12px;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:6px;cursor:pointer;transition:all 0.15s;font-size:12px;}
+.lot-row:hover{border-color:#059669;background:#f0fdf4;}
+.lot-id{font-family:'JetBrains Mono',monospace;font-weight:500;color:#1a1a2e;width:80px;flex-shrink:0;}
+.lot-product{color:#6b7280;width:130px;flex-shrink:0;}
+.lot-step{color:#6b7280;width:100px;flex-shrink:0;}
+.lot-wafers{color:#6b7280;width:50px;text-align:center;flex-shrink:0;}
+.lot-cost{font-family:'JetBrains Mono',monospace;font-weight:500;color:#dc2626;flex:1;text-align:right;}
+
+/* Process flow */
+.process-flow{display:flex;gap:0;margin-bottom:16px;overflow-x:auto;padding-bottom:8px;}
+.step-block{display:flex;flex-direction:column;align-items:center;min-width:58px;flex:1;}
+.step-bar{width:100%;height:28px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:500;color:#fff;position:relative;}
+.step-block:first-child .step-bar{border-radius:6px 0 0 6px;}
+.step-block:last-child .step-bar{border-radius:0 6px 6px 0;}
+.step-bar.completed{background:#6ee7b7;}.step-bar.scrap-point{background:#f87171;}.step-bar.not-reached{background:#e5e7eb;}
+.step-label{font-size:7px;color:#9ca3af;margin-top:3px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:56px;}
+.step-cost{font-size:7px;color:#6b7280;font-family:'JetBrains Mono',monospace;margin-top:1px;}
+.scrap-marker{position:absolute;top:-16px;font-size:14px;line-height:1;}
+
+.cost-breakdown{display:flex;flex-direction:column;gap:6px;}
+.cost-row{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#f9fafb;border-radius:8px;font-size:13px;}
+.cost-row.total{background:#059669;color:#fff;font-weight:600;margin-top:4px;}
+.cost-label{color:#6b7280;}.cost-row.total .cost-label{color:rgba(255,255,255,0.8);}
+.cost-value{font-family:'JetBrains Mono',monospace;font-weight:500;}
+
+/* Product breakdown table */
+.prod-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #f3f4f6;font-size:13px;}
+.prod-row:last-child{border-bottom:none;}
+.prod-name{color:#1a1a2e;font-weight:500;width:180px;flex-shrink:0;}
+.prod-lots{color:#6b7280;width:60px;text-align:center;}
+.prod-bar-wrap{flex:1;height:8px;background:#f3f4f6;border-radius:4px;overflow:hidden;}
+.prod-bar{height:100%;border-radius:4px;background:#f87171;}
+.prod-cost{font-family:'JetBrains Mono',monospace;font-weight:500;color:#1a1a2e;width:80px;text-align:right;}
+
+/* Step hotspot */
+.hotspot-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f3f4f6;font-size:12px;}
+.hotspot-row:last-child{border-bottom:none;}
+.hotspot-step{color:#1a1a2e;font-weight:500;width:160px;flex-shrink:0;}
+.hotspot-bar-wrap{flex:1;height:8px;background:#f3f4f6;border-radius:4px;overflow:hidden;}
+.hotspot-bar{height:100%;border-radius:4px;background:#fbbf24;}
+.hotspot-count{font-family:'JetBrains Mono',monospace;color:#6b7280;width:50px;text-align:right;}
+.hotspot-cost{font-family:'JetBrains Mono',monospace;font-weight:500;color:#1a1a2e;width:70px;text-align:right;}
+
+/* Detail overlay */
+.detail-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.3);z-index:100;display:none;align-items:center;justify-content:center;padding:24px;}
+.detail-overlay.open{display:flex;}
+.detail-panel{background:#fff;border-radius:16px;border:1px solid #e5e7eb;max-width:740px;width:100%;max-height:90vh;overflow-y:auto;padding:28px;}
+.detail-close{float:right;background:none;border:1px solid #e5e7eb;border-radius:8px;padding:4px 12px;font-size:13px;color:#6b7280;cursor:pointer;font-family:'DM Sans',sans-serif;}
+.detail-close:hover{background:#f3f4f6;}
+
+/* AI Panel reuse */
+.risk-row{display:flex;align-items:center;gap:12px;padding:12px;border:1px solid #e5e7eb;border-radius:10px;margin-bottom:8px;cursor:pointer;transition:all 0.15s;}
+.risk-row:hover{border-color:#059669;background:#f0fdf4;}
+.risk-row.high{border-left:3px solid #dc2626;}.risk-row.med{border-left:3px solid #d97706;}.risk-row.low{border-left:3px solid #059669;}
+.risk-lot{font-size:13px;font-weight:500;color:#1a1a2e;width:80px;flex-shrink:0;font-family:'JetBrains Mono',monospace;}
+.risk-product{font-size:12px;color:#6b7280;width:100px;flex-shrink:0;}
+.risk-step{font-size:12px;color:#6b7280;flex-shrink:0;width:60px;}
+.risk-bar-wrap{flex:1;height:8px;background:#f3f4f6;border-radius:4px;overflow:hidden;}
+.risk-bar-fill{height:100%;border-radius:4px;}.risk-bar-fill.high{background:#f87171;}.risk-bar-fill.med{background:#fbbf24;}.risk-bar-fill.low{background:#6ee7b7;}
+.risk-score{font-size:12px;font-weight:500;width:40px;text-align:right;font-family:'JetBrains Mono',monospace;}
+.risk-score.high{color:#dc2626;}.risk-score.med{color:#d97706;}.risk-score.low{color:#059669;}
+.risk-cost{font-size:12px;font-family:'JetBrains Mono',monospace;color:#6b7280;width:70px;text-align:right;flex-shrink:0;}
+
+.feature-row{display:flex;align-items:center;gap:10px;margin-bottom:6px;}
+.feature-name{font-size:12px;color:#6b7280;width:140px;flex-shrink:0;}
+.feature-bar-wrap{flex:1;height:12px;background:#f3f4f6;border-radius:4px;overflow:hidden;}
+.feature-bar{height:100%;border-radius:4px;background:#6ee7b7;}
+.feature-pct{font-size:11px;font-family:'JetBrains Mono',monospace;color:#9ca3af;width:36px;text-align:right;}
+
+.rec-card{padding:14px 16px;border-radius:10px;margin-bottom:10px;}
+.rec-card.catch-early{background:#f0fdf4;border:1px solid #bbf7d0;}
+.rec-card.let-run{background:#fef2f2;border:1px solid #fecaca;}
+.rec-title{font-size:13px;font-weight:500;}
+.rec-catch .rec-title{color:#166534;}.rec-let .rec-title{color:#991b1b;}
+.rec-cost{font-size:18px;font-weight:600;font-family:'JetBrains Mono',monospace;}
+.rec-desc{font-size:12px;color:#6b7280;line-height:1.5;}
+.rec-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+
+.back-btn{background:none;border:1px solid #e5e7eb;border-radius:8px;padding:6px 14px;font-size:12px;color:#6b7280;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:16px;display:inline-flex;align-items:center;gap:4px;}
+.back-btn:hover{background:#f3f4f6;}
+</style>
+</head>
+<body>
+<div class="dashboard">
+
+<div class="card" style="cursor:pointer;" onclick="this.querySelector('.about-body').style.display=this.querySelector('.about-body').style.display==='none'?'block':'none';this.querySelector('.about-toggle').textContent=this.querySelector('.about-body').style.display==='none'?'▸ Show':'▾ Hide';">
+<div style="display:flex;justify-content:space-between;align-items:center;">
+<div style="font-size:14px;font-weight:600;color:#1a1a2e;">About ScrapSight</div>
+<span class="about-toggle" style="font-size:11px;color:#059669;font-weight:500;">▸ Show</span>
+</div>
+<div class="about-body" style="display:none;margin-top:16px;font-size:13px;color:#4b5563;line-height:1.8;">
+<p style="margin-bottom:12px;"><strong style="color:#1a1a2e;">The problem.</strong> In semiconductor fabrication, a scrapped wafer is not a fixed-cost event — it is a variable one. The cost depends on where in the manufacturing process the failure occurs. A wafer that fails after substrate preparation costs hundreds of dollars. The same wafer failing after ten process steps — epitaxy, lithography, etching, metallization, burn-in — costs thousands. Each step adds equipment time, consumables, and overhead to the accumulated cost.</p>
+<p style="margin-bottom:12px;">Calculating this accurately is straightforward in theory but painful in practice. Each fab site runs different process flows, different equipment with different hourly cost rates, and different product lines with different step counts. SAP captures the standard cost of a finished product, but does not automatically calculate the accumulated cost at an arbitrary failure point mid-process. That requires pulling together the manufacturing routing, step-level equipment time confirmations, material master costs, and finance cost center rates — then running the math manually, site by site, lot by lot.</p>
+<p style="margin-bottom:12px;"><strong style="color:#1a1a2e;">How this tool works.</strong> ScrapSight standardizes the scrap cost calculation across sites. It maps each site's specific process flow, assigns accumulated cost at every step based on material cost, equipment time, and overhead allocation, and produces scrap cost figures at three levels:</p>
+<p style="margin-bottom:6px;padding-left:16px;">• <strong>Per lot</strong> — cost of a specific scrapped lot at its exact point of failure, with full material, processing, and overhead breakdown</p>
+<p style="margin-bottom:6px;padding-left:16px;">• <strong>Per site, per month</strong> — total scrap across all lots at a given site, broken down by product line and failure point</p>
+<p style="margin-bottom:12px;padding-left:16px;">• <strong>Cross-site rollup</strong> — monthly and year-to-date totals across all sites, with scrap rate as a percentage of total production cost</p>
+<p style="margin-bottom:12px;"><strong style="color:#1a1a2e;">Who uses it.</strong> An accounting analyst uses it to close the monthly scrap accrual in minutes instead of days. A finance director uses the site and product breakdowns to identify where scrap cost is concentrating. An operations leader uses the failure hotspot analysis to see which process steps generate the most expensive scrap — and where early detection would save the most money.</p>
+<p><strong style="color:#1a1a2e;">The AI layer</strong> extends this from retrospective reporting to predictive prevention — flagging at-risk lots before they accumulate full processing cost, projecting month-end scrap exposure for finance, and identifying root cause patterns across sites using classical ML on process telemetry data.</p>
+</div>
+</div>
+
+<div class="tab-bar">
+<button class="tab-btn active" onclick="switchTab('manual')">Scrap cost calculations<span class="tab-label">Visual representation for fabrication manufacturing sites</span></button>
+<button class="tab-btn" onclick="switchTab('ai')">What AI enables<span class="tab-label">Predictive scrap risk engine</span></button>
+</div>
+
+<!-- PANEL 1: ACCOUNTING REPORTING -->
+<div class="panel active" id="panel-manual">
+<div id="manual-content"></div>
+</div>
+
+<!-- PANEL 2: AI ENGINE -->
+<div class="panel" id="panel-ai">
+<div id="ai-content"></div>
+</div>
+
+<!-- Detail overlay -->
+<div class="detail-overlay" id="lotOverlay" onclick="if(event.target===this)closeLotDetail()">
+<div class="detail-panel" id="lotPanel">
+<button class="detail-close" onclick="closeLotDetail()">Close</button>
+<div id="lotDetailContent"></div>
+</div>
+</div>
+
+<script>
+// ========== DATA ==========
+const overheadRate = 0.15;
+const sites = {
+  sj: { name:'San Jose, CA', code:'SJ',
+    products: {
+      oam:{name:'Optical Amplifier Module',steps:['Substrate prep','Epitaxy','Waveguide etch','Passivation','Metallization','AR coating','Cleave & polish','Burn-in test','Module assembly','Optical alignment','Final test','Pack & ship'],baseMaterial:320,equipRate:85,stepTimes:[0.5,2.5,1.8,1.0,1.5,0.8,1.2,3.0,2.0,2.5,1.5,0.3]},
+      tfl:{name:'Thin Film Filter',steps:['Substrate clean','Multi-layer deposit','Photolithography','Ion etch','Spectral test','Dicing','Coating','Env stress','Final metrology','Package'],baseMaterial:180,equipRate:72,stepTimes:[0.3,3.0,2.0,1.5,1.0,0.8,1.2,4.0,1.5,0.5]},
+      plc:{name:'Planar Lightwave Circuit',steps:['Wafer prep','Core deposition','UV exposure','Reactive ion etch','Cladding deposit','Fiber attach','Thermal cycle','IL test','Assembly','QA test','Ship prep'],baseMaterial:410,equipRate:95,stepTimes:[0.4,2.8,1.5,2.0,1.8,3.5,2.0,1.5,1.8,1.2,0.3]}
+    }
+  },
+  uk: { name:'Caswell, UK', code:'UK',
+    products: {
+      ild:{name:'InP Laser Diode',steps:['Wafer clean','MOCVD growth','Ridge etch','Planarization','Contact metal','Anneal','Facet coat','Bar test','Singulation','Burn-in','Spectral QA','Package'],baseMaterial:580,equipRate:110,stepTimes:[0.3,4.0,2.0,1.5,1.2,1.0,0.8,2.5,1.0,6.0,1.5,0.8]},
+      soa:{name:'Semiconductor Optical Amp',steps:['Substrate prep','Epitaxy','Waveguide define','Passivation','Electrode deposit','Cleave','AR/HR coat','Char test','Module mount','Fiber couple','Final test'],baseMaterial:490,equipRate:105,stepTimes:[0.4,3.5,2.2,1.0,1.5,0.8,1.0,2.0,1.8,3.0,1.5]}
+    }
+  },
+  th: { name:'Pathumthani, Thailand', code:'TH',
+    products: {
+      vcl:{name:'VCSEL Array',steps:['Wafer prep','MBE growth','Mesa etch','Oxidation','Contact deposit','Passivation','Via etch','Probe test','Dicing','Wire bond','Lens attach','Final test'],baseMaterial:220,equipRate:58,stepTimes:[0.3,3.5,1.5,2.0,1.0,0.8,1.2,1.5,0.6,1.0,1.8,1.2]},
+      pdm:{name:'Photodetector Module',steps:['Substrate clean','Absorber growth','Mesa define','Passivation','Metal contact','AR coat','Chip test','Die attach','Wire bond','Align & couple','Seal','Screen test','Pack'],baseMaterial:160,equipRate:52,stepTimes:[0.3,2.5,1.2,0.8,1.0,0.6,1.5,0.8,0.8,2.0,1.5,2.0,0.3]}
+    }
+  },
+  jp: { name:'Sagamihara, Japan', code:'JP',
+    products: {
+      wss:{name:'Wavelength Selective Switch',steps:['LCoS prep','MEMS fabrication','Optical engine','Fiber array bond','Beam alignment','Thermal cal','Channel verify','IL test','PDL measure','Env qual','System integration','Final accept'],baseMaterial:850,equipRate:130,stepTimes:[1.0,4.0,3.0,2.5,3.5,2.0,1.5,1.5,1.0,6.0,2.5,1.0]},
+      rdm:{name:'ROADM Line Card',steps:['Incoming QA','PCB assembly','Optical sub-mount','WSS integration','Control board','Firmware load','Channel test','Power cal','Stress test','Final validation','Pack & ship'],baseMaterial:620,equipRate:115,stepTimes:[0.5,1.5,2.0,3.0,1.5,0.8,2.0,1.5,8.0,1.5,0.4]}
+    }
+  }
+};
+
+// Generate simulated scrap lots per site/month
+function genScrapLots(siteKey, month) {
+  const s = sites[siteKey];
+  const prods = Object.entries(s.products);
+  const lots = [];
+  const seed = (siteKey.charCodeAt(0)*31 + month*7) % 100;
+  const count = 3 + (seed % 5);
+  for (let i = 0; i < count; i++) {
+    const [pk, pv] = prods[i % prods.length];
+    const scrapStep = 2 + Math.floor((seed * (i+3)) % (pv.steps.length - 3));
+    const wafers = 15 + ((seed * (i+1)) % 20);
+    let accum = pv.baseMaterial;
+    for (let j = 0; j <= scrapStep; j++) accum += pv.stepTimes[j] * pv.equipRate;
+    const perWafer = Math.round(accum * (1 + overheadRate));
+    lots.push({ id:`LOT-${3000 + siteKey.charCodeAt(0)*10 + month*100 + i}`, product:pv.name, productKey:pk, scrapStep, stepName:pv.steps[scrapStep], totalSteps:pv.steps.length, wafers, perWafer, totalCost:perWafer*wafers });
+  }
+  return lots;
+}
+
+const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const currentMonth = 2; // March (0-indexed)
+let currentView = 'dashboard';
+let selectedSite = null;
+let selectedPeriod = 'month';
+let charts = {};
+
+function destroyCharts() { Object.values(charts).forEach(c => { if(c) c.destroy(); }); charts = {}; }
+
+function calcSiteTotals(period) {
+  const result = {};
+  const months = period === 'month' ? [currentMonth] : Array.from({length:currentMonth+1},(_, i) => i);
+  for (const [sk, sv] of Object.entries(sites)) {
+    let total = 0, lotCount = 0, allLots = [];
+    months.forEach(m => {
+      const lots = genScrapLots(sk, m);
+      lots.forEach(l => { total += l.totalCost; lotCount++; });
+      allLots.push(...lots);
+    });
+    const prodTotals = calcProductionCost(sk) * months.length;
+    result[sk] = { name:sv.name, code:sv.code, total, lotCount, lots:allLots, scrapRate: prodTotals > 0 ? (total / prodTotals * 100) : 0 };
+  }
+  return result;
+}
+
+function calcProductionCost(siteKey) {
+  const s = sites[siteKey];
+  let total = 0;
+  for (const pv of Object.values(s.products)) {
+    let fullCost = pv.baseMaterial;
+    pv.stepTimes.forEach(t => fullCost += t * pv.equipRate);
+    total += fullCost * (1 + overheadRate) * 80; // ~80 wafers/month/product
+  }
+  return total;
+}
+
+function fmt(n) { return '$' + n.toLocaleString(); }
+function fmtK(n) { return n >= 1000000 ? '$' + (n/1000000).toFixed(1) + 'M' : '$' + Math.round(n/1000) + 'K'; }
+
+// ========== RENDER DASHBOARD ==========
+function renderDashboard() {
+  destroyCharts();
+  currentView = 'dashboard';
+  selectedSite = null;
+  const data = calcSiteTotals(selectedPeriod);
+  const grandTotal = Object.values(data).reduce((s,d) => s+d.total, 0);
+  const grandLots = Object.values(data).reduce((s,d) => s+d.lotCount, 0);
+  const maxSite = Math.max(...Object.values(data).map(d => d.total));
+  const totalProd = Object.keys(sites).reduce((s,sk) => s + calcProductionCost(sk) * (selectedPeriod === 'year' ? currentMonth+1 : 1), 0);
+  const overallScrapRate = totalProd > 0 ? (grandTotal / totalProd * 100).toFixed(1) : '0.0';
+  const avgPerWafer = grandLots > 0 ? Math.round(grandTotal / Object.values(data).reduce((s,d) => s + d.lots.reduce((ss,l)=>ss+l.wafers,0),0)) : 0;
+
+  const periodLabel = selectedPeriod === 'month' ? 'March 2023' : 'YTD 2023 (Jan–Mar)';
+
+  let html = `
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;">
+        <div>
+          <div class="card-title">ScrapSight — Scrap cost reporting</div>
+          <div style="font-size:12px;color:#9ca3af;margin-top:4px;">Standardized scrap cost calculation across 4 fab sites. ${periodLabel}.</div>
+        </div>
+        <div class="toggle-row" style="margin-bottom:0;">
+          <button class="toggle-btn ${selectedPeriod==='month'?'active':''}" onclick="selectedPeriod='month';renderDashboard()">Month</button>
+          <button class="toggle-btn ${selectedPeriod==='year'?'active':''}" onclick="selectedPeriod='year';renderDashboard()">YTD</button>
+        </div>
+      </div>
+      <div class="metrics">
+        <div class="metric-card"><div class="metric-val" style="color:#dc2626;">${fmtK(grandTotal)}</div><div class="metric-label">Total scrap cost</div></div>
+        <div class="metric-card"><div class="metric-val" style="color:#1a1a2e;">${grandLots}</div><div class="metric-label">Lots scrapped</div></div>
+        <div class="metric-card"><div class="metric-val" style="color:#d97706;">${overallScrapRate}%</div><div class="metric-label">Scrap rate (% of prod)</div></div>
+        <div class="metric-card"><div class="metric-val" style="color:#2563eb;">${fmt(avgPerWafer)}</div><div class="metric-label">Avg cost per wafer</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-label">Scrap cost by site — click to drill down</div>
+      <div id="site-list"></div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+      <div class="card">
+        <div class="section-label">Monthly trend — all sites</div>
+        <div class="chart-wrap chart-wrap-sm"><canvas id="trendChartManual"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="section-label">Scrap by site (share)</div>
+        <div class="chart-wrap chart-wrap-sm"><canvas id="siteShareChart"></canvas></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-label">Top scrap failure points — across all sites</div>
+      <div id="hotspot-list"></div>
+    </div>
+  `;
+
+  document.getElementById('manual-content').innerHTML = html;
+
+  // Site list
+  const siteList = document.getElementById('site-list');
+  const sorted = Object.entries(data).sort((a,b) => b[1].total - a[1].total);
+  sorted.forEach(([sk, d]) => {
+    const row = document.createElement('div');
+    row.className = 'site-row';
+    row.innerHTML = `
+      <span class="site-name">${d.name}</span>
+      <div class="site-bar-wrap"><div class="site-bar" style="width:${(d.total/maxSite*100).toFixed(0)}%;background:${d.total===maxSite?'#f87171':'#6ee7b7'};"></div></div>
+      <span class="site-pct">${(d.total/grandTotal*100).toFixed(0)}%</span>
+      <span class="site-cost">${fmtK(d.total)}</span>
+    `;
+    row.addEventListener('click', () => renderSiteDetail(sk));
+    siteList.appendChild(row);
+  });
+
+  // Trend chart
+  const trendData = monthNames.slice(0, currentMonth+1).map((_, m) => {
+    return Object.keys(sites).reduce((s, sk) => s + genScrapLots(sk, m).reduce((ss, l) => ss + l.totalCost, 0), 0);
+  });
+  charts.trend = new Chart(document.getElementById('trendChartManual'), {
+    type:'line', data:{ labels:monthNames.slice(0,currentMonth+1), datasets:[{label:'Total scrap ($)',data:trendData,borderColor:'#dc2626',backgroundColor:'rgba(220,38,38,0.05)',fill:true,tension:0.3,pointRadius:4,borderWidth:2,pointBackgroundColor:'#dc2626'}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{font:{size:10,family:"'JetBrains Mono'"},color:'#9ca3af'}},y:{grid:{color:'#f3f4f6'},ticks:{font:{size:10,family:"'JetBrains Mono'"},color:'#9ca3af',callback:v=>fmtK(v)},beginAtZero:true}}}
+  });
+
+  // Site share chart
+  const shareLabels = sorted.map(([_,d]) => d.code);
+  const shareData = sorted.map(([_,d]) => d.total);
+  charts.share = new Chart(document.getElementById('siteShareChart'), {
+    type:'doughnut', data:{ labels:shareLabels, datasets:[{data:shareData,backgroundColor:['#f87171','#fbbf24','#6ee7b7','#93c5fd'],borderWidth:0}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{boxWidth:10,font:{size:11,family:"'DM Sans'"},color:'#6b7280',padding:8}}},cutout:'60%'}
+  });
+
+  // Hotspots
+  const stepCounts = {};
+  Object.entries(data).forEach(([sk, d]) => {
+    d.lots.forEach(l => {
+      const key = l.stepName;
+      if (!stepCounts[key]) stepCounts[key] = {count:0, cost:0};
+      stepCounts[key].count++;
+      stepCounts[key].cost += l.totalCost;
+    });
+  });
+  const hotspots = Object.entries(stepCounts).sort((a,b) => b[1].cost - a[1].cost).slice(0, 6);
+  const maxHotspot = hotspots.length > 0 ? hotspots[0][1].cost : 1;
+  document.getElementById('hotspot-list').innerHTML = hotspots.map(([step, d]) => `
+    <div class="hotspot-row">
+      <span class="hotspot-step">${step}</span>
+      <div class="hotspot-bar-wrap"><div class="hotspot-bar" style="width:${(d.cost/maxHotspot*100).toFixed(0)}%;"></div></div>
+      <span class="hotspot-count">${d.count} lots</span>
+      <span class="hotspot-cost">${fmtK(d.cost)}</span>
+    </div>
+  `).join('');
+}
+
+// ========== SITE DETAIL ==========
+function renderSiteDetail(siteKey) {
+  destroyCharts();
+  currentView = 'site';
+  selectedSite = siteKey;
+  const s = sites[siteKey];
+  const months = selectedPeriod === 'month' ? [currentMonth] : Array.from({length:currentMonth+1},(_,i)=>i);
+  let allLots = [];
+  months.forEach(m => allLots.push(...genScrapLots(siteKey, m)));
+  const total = allLots.reduce((s,l) => s+l.totalCost, 0);
+  const totalWafers = allLots.reduce((s,l) => s+l.wafers, 0);
+  const prodCost = calcProductionCost(siteKey) * months.length;
+  const scrapRate = prodCost > 0 ? (total/prodCost*100).toFixed(1) : '0.0';
+
+  // Product breakdown
+  const prodTotals = {};
+  allLots.forEach(l => {
+    if (!prodTotals[l.product]) prodTotals[l.product] = {cost:0, lots:0};
+    prodTotals[l.product].cost += l.totalCost;
+    prodTotals[l.product].lots++;
+  });
+  const prodSorted = Object.entries(prodTotals).sort((a,b) => b[1].cost - a[1].cost);
+  const maxProd = prodSorted.length > 0 ? prodSorted[0][1].cost : 1;
+
+  const periodLabel = selectedPeriod === 'month' ? 'March 2023' : 'YTD 2023';
+
+  let html = `
+    <button class="back-btn" onclick="renderDashboard()">← All sites</button>
+    <div class="breadcrumb"><a onclick="renderDashboard()">All sites</a><span>›</span><span style="color:#1a1a2e;font-weight:500;">${s.name}</span></div>
+
+    <div class="card">
+      <div class="card-title">${s.name}</div>
+      <div style="font-size:12px;color:#9ca3af;margin-top:2px;margin-bottom:20px;">${periodLabel} · ${Object.keys(s.products).length} product lines</div>
+      <div class="metrics">
+        <div class="metric-card"><div class="metric-val" style="color:#dc2626;">${fmtK(total)}</div><div class="metric-label">Total scrap cost</div></div>
+        <div class="metric-card"><div class="metric-val" style="color:#1a1a2e;">${allLots.length}</div><div class="metric-label">Lots scrapped</div></div>
+        <div class="metric-card"><div class="metric-val" style="color:#d97706;">${scrapRate}%</div><div class="metric-label">Scrap rate</div></div>
+        <div class="metric-card"><div class="metric-val" style="color:#2563eb;">${fmt(Math.round(total/totalWafers))}</div><div class="metric-label">Avg cost/wafer</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-label">Scrap by product line</div>
+      ${prodSorted.map(([name, d]) => `
+        <div class="prod-row">
+          <span class="prod-name">${name}</span>
+          <span class="prod-lots">${d.lots} lots</span>
+          <div class="prod-bar-wrap"><div class="prod-bar" style="width:${(d.cost/maxProd*100).toFixed(0)}%;"></div></div>
+          <span class="prod-cost">${fmtK(d.cost)}</span>
+        </div>
+      `).join('')}
+    </div>
+
+    <div class="card">
+      <div class="section-label">Scrapped lots — click for cost breakdown</div>
+      <div class="lot-header">
+        <span style="width:80px;">Lot</span>
+        <span style="width:130px;">Product</span>
+        <span style="width:100px;">Scrap point</span>
+        <span style="width:50px;text-align:center;">Wafers</span>
+        <span style="flex:1;text-align:right;">Total cost</span>
+      </div>
+      ${allLots.sort((a,b)=>b.totalCost-a.totalCost).map((l,i) => `
+        <div class="lot-row" onclick="renderLotDetail('${siteKey}','${l.productKey}',${l.scrapStep},${l.wafers},'${l.id}')">
+          <span class="lot-id">${l.id}</span>
+          <span class="lot-product">${l.product}</span>
+          <span class="lot-step">Step ${l.scrapStep+1}/${l.totalSteps}</span>
+          <span class="lot-wafers">${l.wafers}</span>
+          <span class="lot-cost">${fmtK(l.totalCost)}</span>
+        </div>
+      `).join('')}
+    </div>
+  `;
+
+  document.getElementById('manual-content').innerHTML = html;
+}
+
+// ========== LOT DETAIL (OVERLAY) ==========
+function renderLotDetail(siteKey, prodKey, scrapIdx, lotSize, lotId) {
+  const s = sites[siteKey];
+  const p = s.products[prodKey];
+  if (!p) return;
+  const costs = [];
+  let accum = p.baseMaterial;
+  for (let i = 0; i < p.steps.length; i++) {
+    accum += p.stepTimes[i] * p.equipRate;
+    costs.push({ step:p.steps[i], accumulated:Math.round(accum), overhead:Math.round(accum*overheadRate) });
+  }
+  const sc = costs[scrapIdx];
+  const perWafer = sc.accumulated + sc.overhead;
+  const totalLot = perWafer * lotSize;
+  const processingCost = sc.accumulated - p.baseMaterial;
+  const finalCost = costs[costs.length-1].accumulated + costs[costs.length-1].overhead;
+  const savedPerWafer = finalCost - perWafer;
+
+  const flowHtml = costs.map((c, i) => {
+    const cls = i < scrapIdx ? 'completed' : i === scrapIdx ? 'scrap-point' : 'not-reached';
+    return `<div class="step-block"><div class="step-bar ${cls}">${i+1}${i===scrapIdx?'<span class="scrap-marker">⬇</span>':''}</div><div class="step-label">${c.step.length>9?c.step.substring(0,9)+'…':c.step}</div><div class="step-cost">$${c.accumulated.toLocaleString()}</div></div>`;
+  }).join('');
+
+  document.getElementById('lotDetailContent').innerHTML = `
+    <div style="margin-bottom:20px;">
+      <div style="font-size:20px;font-weight:600;font-family:'JetBrains Mono',monospace;">${lotId}</div>
+      <div style="font-size:12px;color:#9ca3af;margin-top:4px;">${p.name} · ${s.name} · Scrapped at step ${scrapIdx+1} of ${p.steps.length} (${p.steps[scrapIdx]})</div>
+    </div>
+    <div class="metrics">
+      <div class="metric-card"><div class="metric-val" style="color:#dc2626;">${fmt(perWafer)}</div><div class="metric-label">Cost per wafer</div></div>
+      <div class="metric-card"><div class="metric-val" style="color:#1a1a2e;">${fmtK(totalLot)}</div><div class="metric-label">Total lot cost</div></div>
+      <div class="metric-card"><div class="metric-val" style="color:#059669;">${fmt(savedPerWafer)}</div><div class="metric-label">Saved vs full process</div></div>
+      <div class="metric-card"><div class="metric-val" style="color:#2563eb;">${Math.round((scrapIdx+1)/p.steps.length*100)}%</div><div class="metric-label">Through process</div></div>
+    </div>
+    <div class="section-label">Process flow — accumulated cost at each step</div>
+    <div class="process-flow">${flowHtml}</div>
+    <div style="margin-bottom:16px;"><div class="chart-wrap" style="height:200px;"><canvas id="lotCostChart"></canvas></div></div>
+    <div class="section-label">Cost breakdown</div>
+    <div class="cost-breakdown">
+      <div class="cost-row"><span class="cost-label">Raw material (substrate)</span><span class="cost-value">${fmt(p.baseMaterial)}</span></div>
+      <div class="cost-row"><span class="cost-label">Processing (${scrapIdx+1} steps × equip rate)</span><span class="cost-value">${fmt(processingCost)}</span></div>
+      <div class="cost-row"><span class="cost-label">Overhead (${(overheadRate*100).toFixed(0)}%)</span><span class="cost-value">${fmt(sc.overhead)}</span></div>
+      <div class="cost-row total"><span class="cost-label">Cost per wafer at scrap</span><span class="cost-value">${fmt(perWafer)}</span></div>
+      <div class="cost-row total"><span class="cost-label">Total lot (${lotSize} wafers)</span><span class="cost-value">${fmt(totalLot)}</span></div>
+    </div>
+    <div style="margin-top:16px;font-size:12px;color:#9ca3af;line-height:1.6;">If caught at step 2, per-wafer cost: ${fmt(costs[1].accumulated + costs[1].overhead)}. Early detection savings: ${fmt(perWafer - costs[1].accumulated - costs[1].overhead)} per wafer (${fmt((perWafer - costs[1].accumulated - costs[1].overhead)*lotSize)} per lot).</div>
+    <div class="section-divider">
+      <div class="section-label">Data sources</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <div style="background:#f9fafb;border-radius:8px;padding:10px 12px;font-size:11px;"><span style="color:#9ca3af;">Material cost →</span> <span style="color:#1a1a2e;font-weight:500;">SAP Material Master</span></div>
+        <div style="background:#f9fafb;border-radius:8px;padding:10px 12px;font-size:11px;"><span style="color:#9ca3af;">Process steps →</span> <span style="color:#1a1a2e;font-weight:500;">SAP Routing</span></div>
+        <div style="background:#f9fafb;border-radius:8px;padding:10px 12px;font-size:11px;"><span style="color:#9ca3af;">Equipment time →</span> <span style="color:#1a1a2e;font-weight:500;">MES / SECS-GEM</span></div>
+        <div style="background:#f9fafb;border-radius:8px;padding:10px 12px;font-size:11px;"><span style="color:#9ca3af;">Cost rates →</span> <span style="color:#1a1a2e;font-weight:500;">Finance cost centers</span></div>
+      </div>
+    </div>
+  `;
+  document.getElementById('lotOverlay').classList.add('open');
+
+  // Lot cost chart
+  setTimeout(() => {
+    const labels = costs.map((c,i) => `${i+1}`);
+    const accumData = costs.map(c => c.accumulated);
+    const bgColors = costs.map((c,i) => i < scrapIdx ? '#6ee7b7' : i === scrapIdx ? '#f87171' : '#e5e7eb');
+    new Chart(document.getElementById('lotCostChart'), {
+      type:'bar', data:{labels, datasets:[{data:accumData, backgroundColor:bgColors, borderRadius:3}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{font:{size:9,family:"'JetBrains Mono'"},color:'#9ca3af'}},y:{grid:{color:'#f3f4f6'},ticks:{font:{size:9,family:"'JetBrains Mono'"},color:'#9ca3af',callback:v=>'$'+v.toLocaleString()},beginAtZero:true}}}
+    });
+  }, 100);
+}
+
+function closeLotDetail() { document.getElementById('lotOverlay').classList.remove('open'); }
+document.addEventListener('keydown', e => { if(e.key==='Escape') closeLotDetail(); });
+
+// ========== AI PANEL ==========
+const aiLots = [
+  {lot:'LOT-4821',product:'VCSEL Array',site:'Thailand',step:'6/12',risk:87,level:'high',costAtRisk:'$142K',reason:'Oxidation temp trending +2.8% above baseline. Historical: 4.2× scrap rate when sustained >15 min.',params:['Oxidation temp','Chamber pressure','Growth rate']},
+  {lot:'LOT-3357',product:'InP Laser Diode',site:'Caswell, UK',step:'4/12',risk:73,level:'high',costAtRisk:'$98K',reason:'MOCVD growth rate variance exceeding 2σ on layers 3-5. Correlated with 68% of prior ridge etch failures.',params:['MOCVD rate','Layer thickness','Etch selectivity']},
+  {lot:'LOT-5590',product:'WSS',site:'Sagamihara',step:'5/12',risk:62,level:'med',costAtRisk:'$185K',reason:'Beam alignment deviation 0.3μm from spec center. Trending. High-value units — intervene before step 6.',params:['Beam offset','Fiber coupling loss','Thermal drift']},
+  {lot:'LOT-2104',product:'Thin Film Filter',site:'San Jose',step:'3/10',risk:38,level:'low',costAtRisk:'$22K',reason:'Minor spectral drift on layer 12. Within spec but monitoring.',params:['Spectral center','Layer uniformity','Deposition rate']},
+  {lot:'LOT-4455',product:'ROADM Card',site:'Sagamihara',step:'7/11',risk:31,level:'low',costAtRisk:'$78K',reason:'All parameters nominal. Flagged for monitoring due to high unit value.',params:['Channel isolation','Power flatness','Control loop']},
+  {lot:'LOT-3891',product:'PLC',site:'San Jose',step:'5/11',risk:28,level:'low',costAtRisk:'$45K',reason:'All parameters nominal.',params:['Core index','Etch depth','Coupling loss']},
+  {lot:'LOT-6102',product:'VCSEL Array',site:'Thailand',step:'9/12',risk:22,level:'low',costAtRisk:'$31K',reason:'All parameters nominal.',params:['Threshold current','Slope efficiency','Far-field']},
+  {lot:'LOT-5003',product:'SOA',site:'Caswell, UK',step:'7/11',risk:19,level:'low',costAtRisk:'$52K',reason:'All parameters nominal.',params:['Gain ripple','Noise figure','Polarization dep.']},
+  {lot:'LOT-4290',product:'Optical Amp',site:'San Jose',step:'8/12',risk:15,level:'low',costAtRisk:'$67K',reason:'All parameters nominal.',params:['Gain flatness','Pump current','Output power']},
+  {lot:'LOT-7018',product:'Photodetector',site:'Thailand',step:'4/13',risk:11,level:'low',costAtRisk:'$14K',reason:'All parameters nominal.',params:['Dark current','Responsivity','Bandwidth']},
+  {lot:'LOT-3645',product:'InP Laser Diode',site:'Caswell, UK',step:'10/12',risk:8,level:'low',costAtRisk:'$89K',reason:'All parameters nominal.',params:['Wavelength','SMSR','Linewidth']},
+  {lot:'LOT-2987',product:'Thin Film Filter',site:'San Jose',step:'8/10',risk:5,level:'low',costAtRisk:'$28K',reason:'All parameters nominal.',params:['Center λ','Bandwidth','Ripple']}
+];
+
+const features = [{name:'Chamber temperature',pct:34},{name:'Deposition rate',pct:22},{name:'Etch selectivity',pct:15},{name:'Growth rate variance',pct:11},{name:'Equipment age (hrs)',pct:8},{name:'Operator shift',pct:5},{name:'Humidity',pct:3},{name:'Substrate batch',pct:2}];
+
+let aiInit = false;
+function initAI() {
+  if (aiInit) return;
+  aiInit = true;
+
+  let html = `
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;">
+        <div><div class="card-title">ScrapSight AI — Predictive scrap risk</div><div class="card-sub">Random Forest classifier trained on 14 months of SECS/GEM process telemetry. Flags at-risk lots before full cost accumulates, projects month-end scrap exposure, and identifies root cause patterns across sites.</div></div>
+        <div style="display:flex;gap:6px;"><span class="badge badge-ai">AI-powered</span><span class="badge badge-alert">3 at-risk</span></div>
+      </div>
+      <div class="metrics">
+        <div class="metric-card"><div class="metric-val" style="color:#059669;">$2.4M</div><div class="metric-label">Actual scrap (MTD)</div></div>
+        <div class="metric-card"><div class="metric-val" style="color:#dc2626;">$380K</div><div class="metric-label">Cost at risk (flagged)</div></div>
+        <div class="metric-card"><div class="metric-val" style="color:#d97706;">$2.78M</div><div class="metric-label">Projected month-end</div></div>
+        <div class="metric-card"><div class="metric-val" style="color:#2563eb;">3 / 12</div><div class="metric-label">Lots flagged / active</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-label">Projected month-end scrap — finance accrual forecast</div>
+      <div class="card-sub" style="margin-bottom:16px;">If all flagged lots scrap at their current process step, projected month-end total is $2.78M. Finance can accrue ahead of close instead of catching up retroactively. The projection updates in real time as lots progress or are pulled for intervention.</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px;">
+        <div style="background:#f9fafb;border-radius:10px;padding:14px;text-align:center;border:1px solid #f3f4f6;"><div style="font-size:11px;color:#9ca3af;margin-bottom:4px;">Scrap confirmed (MTD)</div><div style="font-size:20px;font-weight:600;color:#1a1a2e;">$2.40M</div></div>
+        <div style="background:#fef2f2;border-radius:10px;padding:14px;text-align:center;border:1px solid #fecaca;"><div style="font-size:11px;color:#dc2626;margin-bottom:4px;">At-risk (if lots scrap)</div><div style="font-size:20px;font-weight:600;color:#dc2626;">+$380K</div></div>
+        <div style="background:#fffbeb;border-radius:10px;padding:14px;text-align:center;border:1px solid #fde68a;"><div style="font-size:11px;color:#d97706;margin-bottom:4px;">Projected total</div><div style="font-size:20px;font-weight:600;color:#d97706;">$2.78M</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-label">Risk concentration by site</div>
+      <div class="card-sub" style="margin-bottom:16px;">Which sites are carrying the most scrap risk right now. Compare against the historical scrap distribution in Tab 1 to identify whether risk is concentrating in the usual places or shifting.</div>
+      <div id="ai-site-risk"></div>
+    </div>
+
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+        <div class="section-label" style="margin-bottom:0;">Active lots — scrap risk score</div>
+        <div style="display:flex;gap:8px;"><span class="badge badge-alert">High &gt;70%</span><span class="badge badge-amber">Med 40-70%</span><span class="badge badge-ai">Low &lt;40%</span></div>
+      </div>
+      <div id="ai-risk-list"></div>
+    </div>
+
+    <div class="card">
+      <div class="section-label">Monthly scrap trend — actual vs. AI-predicted savings</div>
+      <div class="chart-wrap"><canvas id="aiTrendChart"></canvas></div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+      <div class="card">
+        <div class="section-label">Root cause — feature importance</div>
+        <div class="card-sub" style="margin-bottom:12px;">Which process parameters most strongly predict scrap events. The model learned from 14 months of historical scrap data (Tab 1) that chamber temperature at epitaxy and deposition steps is the dominant predictor — consistent with the failure hotspot analysis showing those steps as the costliest scrap points.</div>
+        <div id="ai-features"></div>
+      </div>
+      <div class="card">
+        <div class="section-label">Early intervention economics</div>
+        <div class="card-sub" style="margin-bottom:12px;">The cost difference between catching a defective lot early vs. letting it run to final test. These numbers are calculated using the same accumulated-cost methodology from Tab 1.</div>
+        <div class="rec-card catch-early rec-catch"><div class="rec-header"><span class="rec-title">Catch at step 4 (post-deposition)</span><span class="rec-cost" style="color:#166534;">$4,200/wafer</span></div><div class="rec-desc">Material + 4 steps accumulated. Inspection cost: $85/wafer. Total lot savings vs final-test discovery: $265K per lot of 25 wafers.</div></div>
+        <div class="rec-card let-run rec-let"><div class="rec-header"><span class="rec-title">Discover at step 11 (final test)</span><span class="rec-cost" style="color:#991b1b;">$14,800/wafer</span></div><div class="rec-desc">Full accumulated processing cost. 3.5× more expensive per wafer. Every step the lot continues on a degrading trajectory adds cost that cannot be recovered.</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-label">Labor cost refinement</div>
+      <div class="card-sub">Tab 1 calculates overhead as a flat 15% allocation — the standard method finance uses at close. The AI model estimates actual labor per step based on operator time logs and equipment utilization, revealing that flat allocation understates true scrap cost on labor-intensive steps and overstates it on automated steps.</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+        <div style="background:#f9fafb;border-radius:10px;padding:14px;border:1px solid #f3f4f6;"><div style="font-size:11px;color:#9ca3af;margin-bottom:6px;">Flat overhead (Tab 1 method)</div><div style="font-size:20px;font-weight:600;color:#6b7280;">$1,840</div><div style="font-size:11px;color:#9ca3af;margin-top:2px;">per wafer (15% flat)</div></div>
+        <div style="background:#f0fdf4;border-radius:10px;padding:14px;border:1px solid #bbf7d0;"><div style="font-size:11px;color:#059669;margin-bottom:6px;">AI-estimated actual labor</div><div style="font-size:20px;font-weight:600;color:#059669;">$2,190</div><div style="font-size:11px;color:#059669;margin-top:2px;">per wafer (variable by step)</div></div>
+      </div>
+      <div style="font-size:12px;color:#6b7280;line-height:1.6;">The flat method underestimates labor on complex manual steps (lithography alignment, fiber coupling, beam calibration) and overestimates on fully automated steps (substrate cleaning, automated deposition). Across all sites, the average attribution error is 19% — meaning monthly scrap reports understate true cost by approximately $180K on labor-intensive product lines like WSS and InP Laser Diodes.</div>
+    </div>
+  `;
+
+  document.getElementById('ai-content').innerHTML = html;
+
+  // Risk list
+  const riskList = document.getElementById('ai-risk-list');
+  aiLots.forEach((lot,i) => {
+    const row = document.createElement('div');
+    row.className = `risk-row ${lot.level}`;
+    row.innerHTML = `<span class="risk-lot">${lot.lot}</span><span class="risk-product">${lot.product}</span><span class="risk-step">${lot.step}</span><div class="risk-bar-wrap"><div class="risk-bar-fill ${lot.level}" style="width:${lot.risk}%;"></div></div><span class="risk-score ${lot.level}">${lot.risk}%</span><span class="risk-cost">${lot.costAtRisk}</span>`;
+    row.addEventListener('click', () => openAILot(i));
+    riskList.appendChild(row);
+  });
+
+  // Features
+  const featEl = document.getElementById('ai-features');
+  features.forEach(f => { featEl.innerHTML += `<div class="feature-row"><span class="feature-name">${f.name}</span><div class="feature-bar-wrap"><div class="feature-bar" style="width:${f.pct}%;"></div></div><span class="feature-pct">${f.pct}%</span></div>`; });
+
+  // Site risk concentration
+  const siteRiskData = [
+    {name:'Sagamihara, Japan',risk:'$185K',lots:2,pct:49,color:'#f87171'},
+    {name:'Pathumthani, Thailand',risk:'$142K',lots:1,pct:37,color:'#fbbf24'},
+    {name:'Caswell, UK',risk:'$98K',lots:1,pct:26,color:'#fbbf24'},
+    {name:'San Jose, CA',risk:'$22K',lots:1,pct:6,color:'#6ee7b7'}
+  ];
+  const siteRiskEl = document.getElementById('ai-site-risk');
+  siteRiskData.forEach(s => {
+    siteRiskEl.innerHTML += `<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #f3f4f6;">
+      <span style="font-size:13px;font-weight:500;color:#1a1a2e;width:160px;flex-shrink:0;">${s.name}</span>
+      <div style="flex:1;height:8px;background:#f3f4f6;border-radius:4px;overflow:hidden;"><div style="height:100%;width:${s.pct}%;background:${s.color};border-radius:4px;"></div></div>
+      <span style="font-size:11px;color:#6b7280;width:50px;text-align:right;">${s.lots} lot${s.lots>1?'s':''}</span>
+      <span style="font-size:13px;font-weight:500;font-family:'JetBrains Mono',monospace;color:#1a1a2e;width:70px;text-align:right;">${s.risk}</span>
+    </div>`;
+  });
+
+  // Trend
+  const months = ['Oct','Nov','Dec','Jan','Feb','Mar','Apr','May','Jun'];
+  new Chart(document.getElementById('aiTrendChart'), {
+    type:'line', data:{ labels:months, datasets:[
+      {label:'Actual scrap ($M)',data:[3.1,2.8,3.4,2.9,2.6,2.4,2.2,2.1,1.9],borderColor:'#6b7280',backgroundColor:'rgba(107,114,128,0.05)',fill:true,tension:0.3,pointRadius:3,borderWidth:2,pointBackgroundColor:'#6b7280'},
+      {label:'With AI ($M)',data:[null,null,null,null,null,null,1.8,1.6,1.4],borderColor:'#059669',backgroundColor:'rgba(5,150,105,0.05)',fill:true,tension:0.3,pointRadius:3,borderWidth:2,borderDash:[6,4],pointBackgroundColor:'#059669'}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'top',align:'end',labels:{boxWidth:12,font:{size:10,family:"'DM Sans'"},color:'#9ca3af',padding:12}}},scales:{x:{grid:{display:false},ticks:{font:{size:10,family:"'JetBrains Mono'"},color:'#9ca3af'}},y:{grid:{color:'#f3f4f6'},ticks:{font:{size:10,family:"'JetBrains Mono'"},color:'#9ca3af',callback:v=>'$'+v.toFixed(1)+'M'},min:0}}}
+  });
+}
+
+function openAILot(idx) {
+  const lot = aiLots[idx];
+  document.getElementById('lotDetailContent').innerHTML = `
+    <div style="margin-bottom:20px;"><div style="font-size:20px;font-weight:600;font-family:'JetBrains Mono',monospace;">${lot.lot}</div><span class="badge badge-${lot.level==='high'?'alert':lot.level==='med'?'amber':'ai'}" style="margin-top:6px;">${lot.risk}% scrap risk</span><div style="font-size:12px;color:#9ca3af;margin-top:6px;">${lot.product} · ${lot.site} · Step ${lot.step}</div></div>
+    <div class="metrics"><div class="metric-card"><div class="metric-val" style="color:#dc2626;">${lot.risk}%</div><div class="metric-label">Risk score</div></div><div class="metric-card"><div class="metric-val" style="color:#1a1a2e;">${lot.costAtRisk}</div><div class="metric-label">Cost at risk</div></div><div class="metric-card"><div class="metric-val" style="color:#2563eb;">${lot.step}</div><div class="metric-label">Current step</div></div><div class="metric-card"><div class="metric-val" style="color:#6b7280;">${lot.site.split(',')[0]}</div><div class="metric-label">Site</div></div></div>
+    <div class="section-label">AI risk assessment</div>
+    <div style="font-size:13px;color:#4b5563;line-height:1.7;margin-bottom:20px;padding:14px;background:#f9fafb;border-radius:10px;">${lot.reason}</div>
+    <div class="section-label">Key parameters</div>
+    <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;">${lot.params.map(p=>`<span style="font-size:11px;padding:4px 10px;border-radius:6px;background:#f3f4f6;color:#6b7280;">${p}</span>`).join('')}</div>
+    ${lot.level!=='low'?`<div class="section-label">Recommended action</div><div class="rec-card catch-early rec-catch"><div class="rec-header"><span class="rec-title">Intervene now — pull for inspection</span></div><div class="rec-desc">Current accumulated cost is lower than projected scrap at final test. If parameters stabilize after hold, lot can re-enter process.</div></div>`:`<div class="section-label">Status</div><div style="font-size:13px;color:#059669;padding:14px;background:#f0fdf4;border-radius:10px;">All parameters nominal. No intervention required.</div>`}
+  `;
+  document.getElementById('lotOverlay').classList.add('open');
+}
+
+// ========== TAB SWITCH ==========
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  if(tab==='manual'){document.querySelectorAll('.tab-btn')[0].classList.add('active');document.getElementById('panel-manual').classList.add('active');renderDashboard();}
+  else{document.querySelectorAll('.tab-btn')[1].classList.add('active');document.getElementById('panel-ai').classList.add('active');initAI();}
+}
+
+// Init
+renderDashboard();
+</script>
+</body>
+</html>
